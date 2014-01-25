@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Plasma!</string>
+    <string name="wallpaper_description">A nice plasma animation</string>
+    <string name="wallpaper_label">Plasma!</string>
+</resources>
