@@ -17,8 +17,8 @@ VERSION_CODE=${VERSION#*-}
 git diff --exit-code > /dev/null
 if [ $? -ne 0 ]
 then
-    echo "ERROR: branch is not clean"
-    exit 1
+    echo "WARNING: branch is not clean"
+    #exit 1
 fi
 
 BUILD_PATH="./builds"
