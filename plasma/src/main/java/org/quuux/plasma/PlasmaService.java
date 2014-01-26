@@ -1,5 +1,6 @@
 package org.quuux.plasma;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.os.Handler;
 import android.service.wallpaper.WallpaperService;
@@ -81,6 +82,7 @@ public class PlasmaService extends WallpaperService {
                 scheduleAnimation(Math.min(100 - duration, 0));
         }
 
+        @SuppressLint("WrongCall")
         private void onDraw(final Canvas canvas) {
             mView.draw(canvas);
         }
