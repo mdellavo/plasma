@@ -14,8 +14,8 @@ CLEAN=$?
 
 if [ $CLEAN -ne 0 ]
 then
-    echo "WARNING: branch is not clean"
-    #exit 1
+    echo "ERROR: branch is not clean"
+    exit 1
 fi
 
 BUILD_PATH="./builds"
@@ -30,7 +30,9 @@ APK_PATH="${BUILD_PATH}/${MODULE}-${VERSION}.apk"
 ./gradlew clean assembleRelease
 cp "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
 
-git tag -a ${VERSION} -m "release - ${VERSION}"
+TAGNAME="v${VERSION}"
+git tag -d ${TAGNAME}
+git tag -a ${TAGNAME} -m "release - ${VERSION}"
 
 echo
 echo ${APK_PATH}
