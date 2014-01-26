@@ -186,7 +186,6 @@ static void init_tables(void)
     init_angles();
 }
 
-
 static __inline__ Fixed color(double t, Fixed x, Fixed y)
 {
 
@@ -200,12 +199,12 @@ static __inline__ Fixed color(double t, Fixed x, Fixed y)
      Fixed xt2 = xt1;
 
      xt1 += (XT1_INCR * x);
-     xt2 += (XT2_INCR * x);
+     xt2 -= (XT2_INCR * x);
 
      Fixed yt1 = FIXED_FROM_FLOAT(t/12300.);
      Fixed yt2 = yt1;
 
-     yt1 += (YT1_INCR * y);
+     yt1 -= (YT1_INCR * y);
      yt2 += (YT2_INCR * y);
 
     return fixed_sin(yt1) + fixed_sin(yt2) + fixed_sin(xt1) + fixed_sin(xt2);

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/plasma_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_alignParentTop="true"
+        android:textSize="24pt"
+        android:textColor="#88FFFFFF"
+        android:shadowColor="#333333"
+        android:shadowRadius="25"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:text="@string/app_name"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:gravity="center"
+        />
+
+    <Button
+        android:id="@+id/set_wallpaper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/set_wallpaper"
+        android:layout_centerInParent="true"
+        android:textSize="18pt"
+        android:shadowColor="#333333"
+        android:shadowRadius="25"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:textColor="#88FFFFFF"
+        android:gravity="center"
+        android:padding="20dp"
+        android:background="@drawable/button"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+
+        <Button
+            android:id="@+id/settings"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12pt"
+            android:background="@drawable/button"
+            android:gravity="center"
+            android:padding="10dp"
+            android:shadowColor="#333333"
+            android:shadowRadius="25"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:layout_margin="5dp"
+            android:text="@string/settings"/>
+
+        <Button
+            android:id="@+id/more"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12pt"
+            android:background="@drawable/button"
+            android:gravity="center"
+            android:padding="10dp"
+            android:shadowColor="#333333"
+            android:shadowRadius="25"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:layout_margin="5dp"
+            android:text="@string/more"/>
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>

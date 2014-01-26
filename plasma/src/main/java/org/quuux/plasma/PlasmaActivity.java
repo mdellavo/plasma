@@ -1,24 +1,13 @@
-/*
- * Copyright (C) 2010 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.quuux.plasma;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.WallpaperManager;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.content.Context;
@@ -26,10 +15,11 @@ import android.view.View;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.Display;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 
-public class PlasmaActivity extends Activity
-{
+public class PlasmaActivity extends Activity implements View.OnClickListener {
 
     @Override
     @SuppressLint("NewApi")
@@ -37,21 +27,47 @@ public class PlasmaActivity extends Activity
     {
         super.onCreate(savedInstanceState);
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-            View decorView = getWindow().getDecorView();
-            int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN;
-            decorView.setSystemUiVisibility(uiOptions);
-        }
-
         final Display display = getWindowManager().getDefaultDisplay();
+        setContentView(R.layout.plasma_layout);
 
+        final Button setWallpaperButton = (Button) findViewById(R.id.set_wallpaper);
+        setWallpaperButton.setOnClickListener(this);
 
-        setContentView(new PlasmaView(this, display.getWidth(), display.getHeight()));
+        final Button settingsButton = (Button) findViewById(R.id.settings);
+        settingsButton.setOnClickListener(this);
+
+        final Button moreButton = (Button)findViewById(R.id.more);
+        moreButton.setOnClickListener(this);
+
+        final ViewGroup container = (ViewGroup) findViewById(R.id.plasma_container);
+        container.addView(new PlasmaView(this, display.getWidth(), display.getHeight()));
     }
 
-    static {
-        System.loadLibrary("plasma");
+    @Override
+    public void onClick(final View v) {
+        switch (v.getId()) {
+
+            case R.id.set_wallpaper: {
+                final Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
+                intent.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                        new ComponentName(this, PlasmaService.class));
+                startActivity(intent);
+            } break;
+
+            case R.id.settings: {
+                final Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+            } break;
+
+            case R.id.more: {
+                final Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse("market://search?q=pub:Quuux%20Software"));
+                startActivity(intent);
+            } break;
+
+            default:
+                break;
+        }
     }
 }
 

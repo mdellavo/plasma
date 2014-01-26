@@ -12,6 +12,10 @@ import java.util.Random;
 
 class PlasmaView extends View {
 
+    static {
+        System.loadLibrary("plasma");
+    }
+
     private final Bitmap mBitmap;
     private final Random mRandom;
     private long mStartTime;
@@ -19,7 +23,7 @@ class PlasmaView extends View {
     private final Matrix mMatrix = new Matrix();
     private final int mRotate;
 
-    private int mFactor = 16;
+    private int mFactor = 8;
 
     /* implementend by libplasma.so */
     private static native void renderPlasma(Bitmap bitmap, long time_ms);

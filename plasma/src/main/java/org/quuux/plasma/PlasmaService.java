@@ -11,11 +11,6 @@ import android.view.SurfaceHolder;
 public class PlasmaService extends WallpaperService {
     private static final String TAG = Log.buildTag(PlasmaService.class);
 
-    static {
-        System.loadLibrary("plasma");
-    }
-
-
     @Override
     public Engine onCreateEngine() {
         return new PlasmaEngine();
