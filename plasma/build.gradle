@@ -16,14 +16,37 @@ android {
 
     buildTypes.debug.jniDebugBuild true
 
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storePassword "xxx"
+            keyAlias "quuux"
+            keyPassword "xxx"
+        }
+    }
+
+    
     buildTypes {
         debug {}
 
         release {
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
         }
     }
 
 
+}
+
+task askForPasswords << {
+    def password = new String(System.console().readPassword("\n\npassword: "))
+    android.signingConfigs.release.storePassword = password
+    android.signingConfigs.release.keyPassword = password
+}
+
+tasks.whenTaskAdded { theTask ->
+    if (theTask.name.equals("packageRelease")) {
+        theTask.dependsOn "askForPasswords"
+    }
 }
