@@ -15,9 +15,7 @@ VERSION_NAME=${VERSION%-*}
 VERSION_CODE=${VERSION#*-}
 
 git diff --exit-code > /dev/null
-CLEAN=$?
-
-if [ $CLEAN -ne 0 ]
+if [ $? -ne 0 ]
 then
     echo "ERROR: branch is not clean"
     exit 1
@@ -30,14 +28,25 @@ then
     mkdir "${BUILD_PATH}"
 fi
 
-APK_PATH="${BUILD_PATH}/${MODULE}-${VERSION}.apk"
+APK_PATH="${BUILD_PATH}/${MODULE}-${TAG}.apk"
+
+echo "------------------------------------------------------------------"
+echo "Building ${MODULE} - name: ${VERSION_NAME} - code: ${VERSION_CODE}"
+echo "------------------------------------------------------------------"
 
 ./gradlew -PversionCode="${VERSION_CODE}" -PversionName="${VERSION_NAME}" clean assembleRelease
-cp -f "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
+
+if [ $? -ne 0 ]
+then
+   echo
+   echo "*** BUILD FAILED!!!"
+   exit 1
+fi
 
 git tag -d ${TAG} 2>&1 >& /dev/null
-
 git tag -a ${TAG} -m "release - ${VERSION}"
+
+cp -f "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
 
 echo
 echo "Build Complete -> ${APK_PATH}"
