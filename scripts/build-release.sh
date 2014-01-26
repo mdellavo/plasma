@@ -32,8 +32,8 @@ fi
 
 APK_PATH="${BUILD_PATH}/${MODULE}-${VERSION}.apk"
 
-./gradlew -PversionCode=${VERSION_CODE} -PversionName={VERSION_NAME}clean assembleRelease
-cp "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
+./gradlew -PversionCode="${VERSION_CODE}" -PversionName="${VERSION_NAME}" clean assembleRelease
+cp -f "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
 
 git tag -d ${TAG} 2>&1 >& /dev/null
 
