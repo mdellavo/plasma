@@ -1,5 +1,12 @@
 apply plugin: 'android'
 
+def getVersionCode = { ->
+
+    def code = project.hasProperty('versionCode') ? versionCode.toInteger() : -1
+    println "VersionCode is set to $code"
+    return code
+}
+
 android {
     compileSdkVersion 19
     buildToolsVersion "19.0.1"
@@ -7,6 +14,9 @@ android {
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 19
+
+        versionCode hasProperty('versionCode') ? $versionCode : 0
+        versionName hasProperty('versionName') ? "$versionName" : "0"
 
         ndk {
             moduleName "plasma"

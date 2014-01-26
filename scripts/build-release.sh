@@ -1,13 +1,18 @@
 #!/bin/sh
 
 MODULE="plasma"
-VERSION=$1
 
-if [ -z "${VERSION}" ]
+TAG=$1
+
+if [ -z "${TAG}" ]
 then
-    echo "USAGE: build-release.sh VERSION"
+    echo "USAGE: build-release.sh v1.0.1-2"
     exit 1
 fi
+
+VERSION=${TAG#v}
+VERSION_NAME=${VERSION%-*}
+VERSION_CODE=${VERSION#*-}
 
 git diff --exit-code > /dev/null
 CLEAN=$?
@@ -27,12 +32,12 @@ fi
 
 APK_PATH="${BUILD_PATH}/${MODULE}-${VERSION}.apk"
 
-./gradlew clean assembleRelease
+./gradlew -PversionCode=${VERSION_CODE} -PversionName={VERSION_NAME}clean assembleRelease
 cp "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
 
-TAGNAME="v${VERSION}"
-git tag -d ${TAGNAME}
-git tag -a ${TAGNAME} -m "release - ${VERSION}"
+git tag -d ${TAG} 2>&1 >& /dev/null
+
+git tag -a ${TAG} -m "release - ${VERSION}"
 
 echo
-echo ${APK_PATH}
+echo "Build Complete -> ${APK_PATH}"
