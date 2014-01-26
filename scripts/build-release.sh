@@ -51,4 +51,4 @@ cp -f "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
 echo
 echo "Build Complete -> ${APK_PATH}"
 
-open ${BUILDS_PATH}
+open -R ${BUILDS_PATH}
