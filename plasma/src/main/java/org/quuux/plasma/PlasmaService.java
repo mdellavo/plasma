@@ -65,6 +65,7 @@ public class PlasmaService extends WallpaperService {
             mHandler.postDelayed(mDrawRunnable, delay);
         }
 
+        @SuppressLint("WrongCall")
         private void draw() {
 
             final long t1 = System.currentTimeMillis();
@@ -82,7 +83,6 @@ public class PlasmaService extends WallpaperService {
                 scheduleAnimation(Math.min(100 - duration, 0));
         }
 
-        @SuppressLint("WrongCall")
         private void onDraw(final Canvas canvas) {
             mView.draw(canvas);
         }
