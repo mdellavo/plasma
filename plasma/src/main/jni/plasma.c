@@ -186,32 +186,39 @@ static void init_tables(void)
     init_angles();
 }
 
-static __inline__ Fixed color(Fixed xt1, Fixed yt1, Fixed xt2, Fixed yt2)
-{
-    return fixed_sin(yt1) + fixed_sin(yt2) + fixed_sin(xt1) + fixed_sin(xt2);
-}
 
-static void fill_plasma( AndroidBitmapInfo*  info, void*  pixels, double  t )
+static __inline__ Fixed color(double t, Fixed x, Fixed y)
 {
-    Fixed yt1 = FIXED_FROM_FLOAT(t/12300.);
-    Fixed yt2 = yt1;
-    Fixed xt10 = FIXED_FROM_FLOAT(t/30000.);
-    Fixed xt20 = xt10;
+
+#define  XT1_INCR  FIXED_FROM_FLOAT(1/173./2.)
+#define  XT2_INCR  FIXED_FROM_FLOAT(1/242./2.)
 
 #define  YT1_INCR   FIXED_FROM_FLOAT(1/100./2.)
 #define  YT2_INCR   FIXED_FROM_FLOAT(1/163./2.)
 
+     Fixed xt1 = FIXED_FROM_FLOAT(t/30000.);
+     Fixed xt2 = xt1;
+
+     xt1 += (XT1_INCR * x);
+     xt2 += (XT2_INCR * x);
+
+     Fixed yt1 = FIXED_FROM_FLOAT(t/12300.);
+     Fixed yt2 = yt1;
+
+     yt1 += (YT1_INCR * y);
+     yt2 += (YT2_INCR * y);
+
+    return fixed_sin(yt1) + fixed_sin(yt2) + fixed_sin(xt1) + fixed_sin(xt2);
+}
+
+
+static void fill_plasma(AndroidBitmapInfo*  info, void*  pixels, double  t)
+{
+
     int  yy;
     for (yy = 0; yy < info->height; yy++) {
         uint16_t*  line = (uint16_t*)pixels;
-        Fixed      xt1 = xt10;
-        Fixed      xt2 = xt20;
-
-        yt1 += YT1_INCR;
-        yt2 += YT2_INCR;
-
-#define  XT1_INCR  FIXED_FROM_FLOAT(1/173./2.)
-#define  XT2_INCR  FIXED_FROM_FLOAT(1/242./2.)
+        int xx = 0;
 
 #if OPTIMIZE_WRITES
         /* optimize memory writes by generating one aligned 32-bit store
@@ -221,23 +228,19 @@ static void fill_plasma( AndroidBitmapInfo*  info, void*  pixels, double  t )
 
         if (line < line_end) {
             if (((uint32_t)line & 3) != 0) {
-                Fixed ii = color(xt1, yt1, xt2, yt2);
-
-                xt1 += XT1_INCR;
-                xt2 += XT2_INCR;
+                Fixed ii = color(t, xx, yy);
+                xx++;
 
                 line[0] = palette_from_fixed(ii >> 2);
                 line++;
             }
 
             while (line + 2 <= line_end) {
-                Fixed i1 = color(xt1, yt1, xt2, yt2);
-                xt1 += XT1_INCR;
-                xt2 += XT2_INCR;
+                Fixed i1 = color(t, xx, yy);
+                xx++;
 
-                Fixed i2 = color(xt1, yt1, xt2, yt2);
-                xt1 += XT1_INCR;
-                xt2 += XT2_INCR;
+                Fixed i2 = color(t, xx, yy);
+                xx++;
 
                 uint32_t  pixel = ((uint32_t)palette_from_fixed(i1 >> 2) << 16) |
                                    (uint32_t)palette_from_fixed(i2 >> 2);
@@ -247,20 +250,14 @@ static void fill_plasma( AndroidBitmapInfo*  info, void*  pixels, double  t )
             }
 
             if (line < line_end) {
-                Fixed ii = color(xt1, yt1, xt2, yt2);
+                Fixed ii = color(t, xx, yy);
                 line[0] = palette_from_fixed(ii >> 2);
                 line++;
             }
         }
 #else /* !OPTIMIZE_WRITES */
-        int xx;
         for (xx = 0; xx < info->width; xx++) {
-
-            Fixed ii = color(xt1, yt1, xt2, yt2);
-
-            xt1 += XT1_INCR;
-            xt2 += XT2_INCR;
-
+            Fixed ii = color(t, xx, yy);
             line[xx] = palette_from_fixed(ii / 4);
         }
 #endif /* !OPTIMIZE_WRITES */

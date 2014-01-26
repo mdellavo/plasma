@@ -71,13 +71,19 @@ public class PlasmaService extends WallpaperService {
 
         private void draw() {
 
+            final long t1 = System.currentTimeMillis();
             final SurfaceHolder surfaceHolder = getSurfaceHolder();
             final Canvas canvas = surfaceHolder.lockCanvas();
             onDraw(canvas);
             surfaceHolder.unlockCanvasAndPost(canvas);
+            final long t2 = System.currentTimeMillis();
+
+
+            final long duration = t2 - t1;
+            //Log.d(TAG, "draw took %dms", duration);
 
             if (isVisible())
-                scheduleAnimation(16);
+                scheduleAnimation(Math.min(100 - duration, 0));
         }
 
         private void onDraw(final Canvas canvas) {
