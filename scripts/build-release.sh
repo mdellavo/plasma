@@ -14,18 +14,18 @@ CLEAN=$?
 
 if [ $CLEAN -ne 0 ]
 then
-    echo "ERROR: branch is not clean"
-    exit 1
+    echo "WARNING: branch is not clean"
+    #exit 1
 fi
 
 BUILD_PATH="./builds"
 
-if [ -e "${BUILD_PATH}" ]
+if [ ! -e "${BUILD_PATH}" ]
 then
     mkdir "${BUILD_PATH}"
 fi
 
-APK_PATH="${BUILD_PATH}/{$MODULE}-release-${VERSION}.apk"
+APK_PATH="${BUILD_PATH}/${MODULE}-${VERSION}.apk"
 
 ./gradlew clean assembleRelease
 cp "${MODULE}/build/apk/${MODULE}-release.apk" ${APK_PATH}
