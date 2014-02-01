@@ -350,13 +350,13 @@ static  Fixed color_fire(double t, int w, int h, int x, int y)
     return fire[x][y] * 7;
 }
 
-#define INIT init_fire
-#define COLOR color_fire
+#define INIT init_plasma
+#define COLOR color_plasma
 
 static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
 {
 
-    seed_fire(info->width, info->height);
+    //seed_fire(info->width, info->height);
 
     int  yy;
     for (yy = 0; yy < info->height; yy++) {
@@ -506,7 +506,10 @@ stats_endFrame( Stats*  s )
     s->lastTime = now;
 }
 
-JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv * env, jobject  obj, jobject bitmap,  jlong  time_ms)
+// FIXME export symbols that wrap an inner tick/render func
+
+
+JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv *env, jobject  obj, jobject bitmap,  jlong  time_ms)
 {
     AndroidBitmapInfo  info;
     void*              pixels;
@@ -537,9 +540,14 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv * en
     stats_startFrame(&stats);
 
     /* Now fill the values with a nice little plasma */
-    fill(&info, pixels, time_ms );
+    fill(&info, pixels, time_ms);
 
     AndroidBitmap_unlockPixels(env, bitmap);
 
     stats_endFrame(&stats);
+}
+
+JNIEXPORT void JNICALL Java_org_quuux_plasma_FireView_renderFire(JNIEnv *env, jobject obj, jobject bitmap, jlong  time_ms)
+{
+
 }

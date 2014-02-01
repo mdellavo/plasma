@@ -6,6 +6,7 @@ import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Display;
@@ -20,14 +21,13 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
     {
         super.onCreate(savedInstanceState);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            final View decorView = getWindow().getDecorView();
+            final int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN;
+            decorView.setSystemUiVisibility(uiOptions);
+        }
 
-        View decorView = getWindow().getDecorView();
-        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN;
-        decorView.setSystemUiVisibility(uiOptions);
-
-
-        final Display display = getWindowManager().getDefaultDisplay();
         setContentView(R.layout.plasma_layout);
 
         final Button setWallpaperButton = (Button) findViewById(R.id.set_wallpaper);
@@ -40,7 +40,7 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
         moreButton.setOnClickListener(this);
 
         final ViewGroup container = (ViewGroup) findViewById(R.id.plasma_container);
-        container.addView(new PlasmaView(this, display.getWidth(), display.getHeight()));
+        container.addView(new PlasmaView(this));
     }
 
     @Override
