@@ -290,9 +290,9 @@ static void init_palette_fire(void)
 
         double percentile = (double)i  / (double)PALETTE_SIZE;
 
-        double h = percentile / 4.  * 360.;
+        double h = percentile / 2.5  * 360.;
         double s = 1.;
-        double v = min(1. , percentile * 1.5);
+        double v = min(1. , percentile * 1.25);
 
         double r,g,b;
         hsv2rgb(&r,&g,&b, h,s,v);
@@ -338,7 +338,7 @@ static  void seed_fire(int w, int h)
                              + fire[(x) % w][(y + 1) % h]
                              + fire[(x + 1) % w][(y + 1) % h]
                              + fire[(x) % w][(y + 2) % h])
-                             ) / 4.05;
+                             ) / 4.025;
 
        }
    }
@@ -347,7 +347,7 @@ static  void seed_fire(int w, int h)
 static  Fixed color_fire(double t, int w, int h, int x, int y)
 {
 
-    return fire[x][y] * 5;
+    return fire[x][y] * 7;
 }
 
 #define INIT init_fire

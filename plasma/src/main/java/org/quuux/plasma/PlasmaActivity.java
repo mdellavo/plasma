@@ -20,6 +20,13 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
     {
         super.onCreate(savedInstanceState);
 
+
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
+
+
         final Display display = getWindowManager().getDefaultDisplay();
         setContentView(R.layout.plasma_layout);
 
