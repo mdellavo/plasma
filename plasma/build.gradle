@@ -27,7 +27,8 @@ android {
 
         ndk {
             moduleName "plasma"
-            ldLibs "dl", "log", "jnigraphics"
+            cFlags "-std=c99 -g"
+            ldLibs "dl", "log", "jnigraphics", "m"
         }
     }
 

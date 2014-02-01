@@ -6,9 +6,6 @@ import android.os.Handler;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
-//         setContentView(new PlasmaView(this, display.getWidth() / FACTOR, display.getHeight() / FACTOR));
-
-
 public class PlasmaService extends WallpaperService {
     private static final String TAG = Log.buildTag(PlasmaService.class);
 
@@ -74,7 +71,6 @@ public class PlasmaService extends WallpaperService {
             onDraw(canvas);
             surfaceHolder.unlockCanvasAndPost(canvas);
             final long t2 = System.currentTimeMillis();
-
 
             final long duration = t2 - t1;
             //Log.d(TAG, "draw took %dms", duration);

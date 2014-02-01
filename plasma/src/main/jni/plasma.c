@@ -33,6 +33,13 @@
 /* Set to 1 to optimize memory stores when generating plasma. */
 #define OPTIMIZE_WRITES  1
 
+#ifndef max
+#define max(x, y) ((x) > (y)) ? (x) : (y)
+#endif
+#ifndef min
+#define min(x, y) ((x) < (y)) ? (x) : (y)
+#endif
+
 /* Return current time in milliseconds */
 static double now_ms(void)
 {
@@ -144,7 +151,7 @@ static uint16_t  make565(int red, int green, int blue)
                        ((blue  >> 3) & 0x001f) );
 }
 
-static void init_palette(void)
+static void init_palette_plasma(void)
 {
     int  nn, mm = 0;
     /* fun with colors */
@@ -180,13 +187,13 @@ static __inline__ uint16_t  palette_from_fixed( Fixed  x )
 
 /* Angles expressed as fixed point radians */
 
-static void init_tables(void)
+static void init_plasma(int w, int h)
 {
-    init_palette();
+    init_palette_plasma();
     init_angles();
 }
 
-static __inline__ Fixed color(double t, Fixed x, Fixed y)
+static __inline__ Fixed color_plasma(double t, int w, int h, int x, int y)
 {
 
 #define  XT1_INCR  FIXED_FROM_FLOAT(1/173./2.)
@@ -194,6 +201,7 @@ static __inline__ Fixed color(double t, Fixed x, Fixed y)
 
 #define  YT1_INCR   FIXED_FROM_FLOAT(1/100./2.)
 #define  YT2_INCR   FIXED_FROM_FLOAT(1/163./2.)
+
 
      Fixed xt1 = FIXED_FROM_FLOAT(t/30000.);
      Fixed xt2 = xt1;
@@ -207,12 +215,148 @@ static __inline__ Fixed color(double t, Fixed x, Fixed y)
      yt1 -= (YT1_INCR * y);
      yt2 += (YT2_INCR * y);
 
-    return fixed_sin(yt1) + fixed_sin(yt2) + fixed_sin(xt1) + fixed_sin(xt2);
+     return fixed_sin(yt1) + fixed_sin(yt2) + fixed_sin(xt1) + fixed_sin(xt2);
+
+//
+//    double w = (double)info->width;
+//    double h = (double)info->height;
+//
+//    double color = (
+//              128.0 + (128.0 * sin((double)x / 16.0 * t / 10000.0))
+//            + 128.0 + (128.0 * sin((double)y / 32.0 / t / 10000.0))
+//            - 128.0 + (128.0 * sin(sqrt((double)((x - w / 2.0) * (x - w / 2.0) + (y - h / 2.0) * (y - h / 2.0))) / 8.0 * t / 1000.0))
+//            + 128.0 + (128.0 * sin(sqrt((double)(x * x + y * y)) / 8.0 / t / 1000.0))
+//         ) / 2.0;
+//
+//    return FIXED_FROM_FLOAT((double)color / 128.0);
+
 }
 
 
-static void fill_plasma(AndroidBitmapInfo*  info, void*  pixels, double  t)
+static  void hsv2rgb( double *r, double *g, double *b, double h, double s, double v )
 {
+	int i;
+	double f, p, q, t;
+	if( s == 0 ) {
+		// achromatic (grey)
+		*r = *g = *b = v;
+		return;
+	}
+	h /= 60;			// sector 0 to 5
+	i = floor(h);
+	f = h - i;			// factorial part of h
+	p = v * ( 1 - s );
+	q = v * ( 1 - s * f );
+	t = v * ( 1 - s * ( 1 - f ) );
+	switch( i ) {
+		case 0:
+			*r = v;
+			*g = t;
+			*b = p;
+			break;
+		case 1:
+			*r = q;
+			*g = v;
+			*b = p;
+			break;
+		case 2:
+			*r = p;
+			*g = v;
+			*b = t;
+			break;
+		case 3:
+			*r = p;
+			*g = q;
+			*b = v;
+			break;
+		case 4:
+			*r = t;
+			*g = p;
+			*b = v;
+			break;
+		default:		// case 5:
+			*r = v;
+			*g = p;
+			*b = q;
+			break;
+	}
+}
+
+
+static void init_palette_fire(void)
+{
+    int i;
+    for (i=0; i<PALETTE_SIZE; i++) {
+
+        double percentile = (double)i  / (double)PALETTE_SIZE;
+
+        double h = percentile / 4.  * 360.;
+        double s = 1.;
+        double v = min(1. , percentile * 1.5);
+
+        double r,g,b;
+        hsv2rgb(&r,&g,&b, h,s,v);
+
+        palette[i] = make565((int)(r * 255), (int)(g * 255), (int)(b * 255));
+    }
+
+}
+
+static int32_t **fire;
+
+static void init_fire(int w, int h)
+{
+    LOGI("init fire palette");
+
+    init_palette_fire();
+
+    fire = malloc(w * sizeof(int32_t *));
+    for (int x=0; x<w; x++) {
+        fire[x] = malloc(h * sizeof(int32_t));
+    }
+
+    LOGI("allocate fire 0x%p %dx%d (@ %d bytes)", fire, w, h, sizeof(int32_t));
+
+    for (int x=0; x<w; x++) {
+        for (int y=0; y<h; y++) {
+            fire[x][y] = 0;
+        }
+    }
+
+}
+
+static  void seed_fire(int w, int h)
+{
+   for(int x = 0; x < w; x++) {
+
+       fire[x][h - 1] = abs(rand()) / 30000.;
+   }
+
+   for(int y=0; y<h-1; y++) {
+       for(int x=0; x<w; x++) {
+           fire[x][y] = ((fire[(x - 1 + w) % w][(y + 1) % h]
+                             + fire[(x) % w][(y + 1) % h]
+                             + fire[(x + 1) % w][(y + 1) % h]
+                             + fire[(x) % w][(y + 2) % h])
+                             ) / 4.05;
+
+       }
+   }
+}
+
+static  Fixed color_fire(double t, int w, int h, int x, int y)
+{
+
+    return fire[x][y] * 5;
+}
+
+#define INIT init_fire
+#define COLOR color_fire
+
+static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
+{
+
+    seed_fire(info->width, info->height);
 
     int  yy;
     for (yy = 0; yy < info->height; yy++) {
@@ -226,8 +370,9 @@ static void fill_plasma(AndroidBitmapInfo*  info, void*  pixels, double  t)
         uint16_t*  line_end = line + info->width;
 
         if (line < line_end) {
+
             if (((uint32_t)line & 3) != 0) {
-                Fixed ii = color(t, xx, yy);
+                Fixed ii = COLOR(t, info->width, info->height, xx, yy);
                 xx++;
 
                 line[0] = palette_from_fixed(ii >> 2);
@@ -235,10 +380,10 @@ static void fill_plasma(AndroidBitmapInfo*  info, void*  pixels, double  t)
             }
 
             while (line + 2 <= line_end) {
-                Fixed i1 = color(t, xx, yy);
+                Fixed i1 = COLOR(t, info->width, info->height, xx, yy);
                 xx++;
 
-                Fixed i2 = color(t, xx, yy);
+                Fixed i2 = COLOR(t, info->width, info->height, xx, yy);
                 xx++;
 
                 uint32_t  pixel = ((uint32_t)palette_from_fixed(i1 >> 2) << 16) |
@@ -249,14 +394,14 @@ static void fill_plasma(AndroidBitmapInfo*  info, void*  pixels, double  t)
             }
 
             if (line < line_end) {
-                Fixed ii = color(t, xx, yy);
+                Fixed ii = COLOR(t, info->width, info->height, xx, yy);
                 line[0] = palette_from_fixed(ii >> 2);
                 line++;
             }
         }
 #else /* !OPTIMIZE_WRITES */
         for (xx = 0; xx < info->width; xx++) {
-            Fixed ii = color(t, xx, yy);
+            Fixed ii = COLOR(t, info->width, info->height, xx, yy);
             line[xx] = palette_from_fixed(ii / 4);
         }
 #endif /* !OPTIMIZE_WRITES */
@@ -369,12 +514,6 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv * en
     static Stats       stats;
     static int         init;
 
-    if (!init) {
-        init_tables();
-        stats_init(&stats);
-        init = 1;
-    }
-
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
         LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
         return;
@@ -389,10 +528,16 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv * en
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
     }
 
+    if (!init) {
+        INIT(info.width, info.height);
+        stats_init(&stats);
+        init = 1;
+    }
+
     stats_startFrame(&stats);
 
     /* Now fill the values with a nice little plasma */
-    fill_plasma(&info, pixels, time_ms );
+    fill(&info, pixels, time_ms );
 
     AndroidBitmap_unlockPixels(env, bitmap);
 

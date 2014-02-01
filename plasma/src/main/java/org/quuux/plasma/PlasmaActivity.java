@@ -5,18 +5,11 @@ import android.app.Activity;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.content.Context;
 import android.view.View;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.view.Display;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 
 public class PlasmaActivity extends Activity implements View.OnClickListener {
@@ -55,7 +48,7 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
             } break;
 
             case R.id.settings: {
-                final Intent intent = new Intent(this, SettingsActivity.class);
+                final Intent intent = new Intent(this, Settings.class);
                 startActivity(intent);
             } break;
 

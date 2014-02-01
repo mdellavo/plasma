@@ -1,6 +1,7 @@
 package org.quuux.plasma;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -16,25 +17,33 @@ class PlasmaView extends View {
         System.loadLibrary("plasma");
     }
 
-    private final Bitmap mBitmap;
+    private  Bitmap mBitmap;
     private final Random mRandom;
+    private final int mWidth;
+    private final int mHeight;
     private long mStartTime;
     private final Paint mPaint = new Paint();
     private final Matrix mMatrix = new Matrix();
     private final int mRotate;
 
-    private int mFactor = 8;
+    private int mFactor = 4;
 
     /* implementend by libplasma.so */
     private static native void renderPlasma(Bitmap bitmap, long time_ms);
 
-    public PlasmaView(Context context, int width, int height) {
+    public PlasmaView(final Context context, final int width, final int height) {
         super(context);
-        mBitmap = Bitmap.createBitmap(width / mFactor, height / mFactor, Bitmap.Config.RGB_565);
+
+        mWidth = width;
+        mHeight = height;
+
+        allocate();
+
         mStartTime = System.currentTimeMillis();
-        mPaint.setAntiAlias(true);
-        mPaint.setFilterBitmap(true);
-        mPaint.setDither(true);
+
+        //mPaint.setAntiAlias(true);
+        //mPaint.setFilterBitmap(true);
+        //mPaint.setDither(true);
 
         mRandom = new Random();
         mRotate = mRandom.nextInt(360);
@@ -51,5 +60,20 @@ class PlasmaView extends View {
         renderPlasma(mBitmap, now - mStartTime);
         canvas.drawBitmap(mBitmap, mMatrix, mPaint);
         invalidate();
+    }
+
+    private void allocate() {
+        mBitmap = Bitmap.createBitmap(mWidth / mFactor, mHeight / mFactor, Bitmap.Config.RGB_565);
+    }
+
+    public void setResolutionFactor(final int resolutionFactor) {
+        if (resolutionFactor != mFactor) {
+            mFactor = resolutionFactor;
+            allocate();
+        }
+    }
+
+    public int getResolutionFactor() {
+        return mFactor;
     }
 }
