@@ -10,6 +10,10 @@ import android.view.View;
 
 public abstract class EffectView extends View {
 
+    static {
+        System.loadLibrary("plasma");
+    }
+
     private Bitmap mBitmap;
     private int mWidth;
     private int mHeight;
@@ -17,7 +21,7 @@ public abstract class EffectView extends View {
     private final Paint mPaint = new Paint();
     private final Matrix mMatrix = new Matrix();
 
-    private int mFactor = 2;
+    private int mFactor = 1;
 
     public EffectView(final Context context) {
         super(context);
@@ -44,6 +48,7 @@ public abstract class EffectView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         mWidth = w;
         mHeight = h;
+        recycle();
         allocate();
     }
 
@@ -64,6 +69,13 @@ public abstract class EffectView extends View {
 
     private void allocate() {
         mBitmap = Bitmap.createBitmap(mWidth / mFactor, mHeight / mFactor, Bitmap.Config.RGB_565);
+    }
+
+    public void recycle() {
+        if (mBitmap != null) {
+            mBitmap.recycle();
+            mBitmap = null;
+        }
     }
 
     public void setResolutionFactor(final int resolutionFactor) {

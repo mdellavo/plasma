@@ -15,7 +15,7 @@ public class PlasmaService extends WallpaperService {
     }
 
     class PlasmaEngine extends WallpaperService.Engine {
-        private PlasmaView mView;
+        private EffectView mView;
         private final Handler mHandler = new Handler();
 
         private final Runnable mDrawRunnable = new Runnable() {
@@ -28,8 +28,13 @@ public class PlasmaService extends WallpaperService {
         @Override
         public void onSurfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
             super.onSurfaceChanged(holder, format, width, height);
-            mView = new PlasmaView(getApplicationContext());
-            mView.onSizeChanged(width, height, 0, 0);
+            EffectFactory.getEffect(getApplicationContext(), new EffectFactory.Listener() {
+                @Override
+                public void effectChanged(final EffectView view) {
+                    mView = view;
+                    mView.onSizeChanged(width, height, 0, 0);
+                }
+            });
         }
 
         @Override

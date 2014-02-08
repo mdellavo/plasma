@@ -5,9 +5,9 @@ import android.content.SharedPreferences;
 public class PlasmaSettingsListener implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private final SharedPreferences mPrefs;
-    private final PlasmaView mView;
+    private final EffectView mView;
 
-    public PlasmaSettingsListener(final SharedPreferences prefs, final PlasmaView view) {
+    public PlasmaSettingsListener(final SharedPreferences prefs, final EffectView view) {
         mPrefs = prefs;
         mView = view;
     }

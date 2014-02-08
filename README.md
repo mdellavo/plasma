@@ -10,3 +10,4 @@ References
 
 https://github.com/android/platform_development/tree/master/ndk/platforms/android-8/samples/bitmap-plasma
 http://lodev.org/cgtutor/plasma.html
+http://freespace.virgin.net/hugo.elias/graphics/x_stars.htm

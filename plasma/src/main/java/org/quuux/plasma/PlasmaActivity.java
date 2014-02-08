@@ -40,7 +40,13 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
         moreButton.setOnClickListener(this);
 
         final ViewGroup container = (ViewGroup) findViewById(R.id.plasma_container);
-        container.addView(new PlasmaView(this));
+        EffectFactory.getEffect(this, new EffectFactory.Listener() {
+            @Override
+            public void effectChanged(final EffectView view) {
+                container.removeAllViews();
+                container.addView(view);
+            }
+        });
     }
 
     @Override

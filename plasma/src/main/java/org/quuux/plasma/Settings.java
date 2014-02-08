@@ -26,16 +26,4 @@ public class Settings extends PreferenceActivity {
         return sharedPreferences.getInt(SETTING_RESOLUTION, DEFAULT_RESOLUTION);
     }
 
-    public static PlasmaSettingsListener bind(final Context context, final PlasmaView view) {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        final PlasmaSettingsListener listener = new PlasmaSettingsListener(prefs, view);
-        prefs.registerOnSharedPreferenceChangeListener(listener);
-        return listener;
-    }
-
-    public static void unbind(final Context context, final PlasmaSettingsListener listener) {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        prefs.unregisterOnSharedPreferenceChangeListener(listener);
-    }
-
 }

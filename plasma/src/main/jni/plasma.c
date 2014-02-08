@@ -144,11 +144,10 @@ static __inline__ Fixed  fixed_cos( Fixed  f )
 
 static uint16_t  palette[PALETTE_SIZE];
 
-static uint16_t  make565(int red, int green, int blue)
+
+static uint16_t make565(int red, int green, int blue)
 {
-    return (uint16_t)( ((red   << 8) & 0xf800) |
-                       ((green << 2) & 0x03e0) |
-                       ((blue  >> 3) & 0x001f) );
+	return (uint16_t)(((red << 8) & 0xf800) | ((green << 3) & 0x07e0) | ((blue >> 3) & 0x001f));
 }
 
 static void init_palette_plasma(void)
@@ -290,7 +289,7 @@ static void init_palette_fire(void)
 
         double percentile = (double)i  / (double)PALETTE_SIZE;
 
-        double h = percentile / 2.5  * 360.;
+        double h = percentile / 3.  * 360.;
         double s = 1.;
         double v = min(1. , percentile * 1.25);
 
@@ -309,6 +308,14 @@ static void init_fire(int w, int h)
     LOGI("init fire palette");
 
     init_palette_fire();
+
+    if (fire != NULL) {
+        int num = sizeof(fire) / sizeof(fire[0]);
+        for(int i=0; i<num; i++) {
+           free(fire[i]);
+        }
+        free(fire);
+    }
 
     fire = malloc(w * sizeof(int32_t *));
     for (int x=0; x<w; x++) {
@@ -346,17 +353,11 @@ static  void seed_fire(int w, int h)
 
 static  Fixed color_fire(double t, int w, int h, int x, int y)
 {
-
     return fire[x][y] * 7;
 }
 
-#define INIT init_plasma
-#define COLOR color_plasma
-
-static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
+static void fill(AndroidBitmapInfo* info, void*  pixels, double  t, Fixed (*color)(double t, int w, int h, int x, int y))
 {
-
-    //seed_fire(info->width, info->height);
 
     int  yy;
     for (yy = 0; yy < info->height; yy++) {
@@ -372,7 +373,7 @@ static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
         if (line < line_end) {
 
             if (((uint32_t)line & 3) != 0) {
-                Fixed ii = COLOR(t, info->width, info->height, xx, yy);
+                Fixed ii = (*color)(t, info->width, info->height, xx, yy);
                 xx++;
 
                 line[0] = palette_from_fixed(ii >> 2);
@@ -380,10 +381,10 @@ static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
             }
 
             while (line + 2 <= line_end) {
-                Fixed i1 = COLOR(t, info->width, info->height, xx, yy);
+                Fixed i1 = (*color)(t, info->width, info->height, xx, yy);
                 xx++;
 
-                Fixed i2 = COLOR(t, info->width, info->height, xx, yy);
+                Fixed i2 = (*color)(t, info->width, info->height, xx, yy);
                 xx++;
 
                 uint32_t  pixel = ((uint32_t)palette_from_fixed(i1 >> 2) << 16) |
@@ -394,15 +395,15 @@ static void fill(AndroidBitmapInfo* info, void*  pixels, double  t)
             }
 
             if (line < line_end) {
-                Fixed ii = COLOR(t, info->width, info->height, xx, yy);
+                Fixed ii = (*color)(t, info->width, info->height, xx, yy);
                 line[0] = palette_from_fixed(ii >> 2);
                 line++;
             }
         }
 #else /* !OPTIMIZE_WRITES */
         for (xx = 0; xx < info->width; xx++) {
-            Fixed ii = COLOR(t, info->width, info->height, xx, yy);
-            line[xx] = palette_from_fixed(ii / 4);
+            Fixed ii = (*color)(t, info->width, info->height, xx, yy);
+            line[xx]  = palette_from_fixed(ii / 4);
         }
 #endif /* !OPTIMIZE_WRITES */
 
@@ -532,7 +533,7 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv *env
     }
 
     if (!init) {
-        INIT(info.width, info.height);
+        init_plasma(info.width, info.height);
         stats_init(&stats);
         init = 1;
     }
@@ -540,7 +541,7 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv *env
     stats_startFrame(&stats);
 
     /* Now fill the values with a nice little plasma */
-    fill(&info, pixels, time_ms);
+    fill(&info, pixels, time_ms, &color_plasma);
 
     AndroidBitmap_unlockPixels(env, bitmap);
 
@@ -549,5 +550,215 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_PlasmaView_renderPlasma(JNIEnv *env
 
 JNIEXPORT void JNICALL Java_org_quuux_plasma_FireView_renderFire(JNIEnv *env, jobject obj, jobject bitmap, jlong  time_ms)
 {
+    AndroidBitmapInfo  info;
+    void*              pixels;
+    int                ret;
+    static Stats       stats;
+    static int         init;
+    static int         width, height;
 
+    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
+        return;
+    }
+    if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
+        LOGE("Bitmap format is not RGB_565 !");
+        return;
+    }
+
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
+        LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
+    }
+
+    if (width != info.width || height != info.height) {
+        init = 0;
+    }
+
+    width = info.width;
+    height = info.height;
+
+    if (!init) {
+        init_fire(info.width, info.height);
+        stats_init(&stats);
+        init = 1;
+    }
+
+    stats_startFrame(&stats);
+
+    seed_fire(info.width, info.height);
+
+    /* FIY-AH */
+    fill(&info, pixels, time_ms, &color_fire);
+
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    stats_endFrame(&stats);
+}
+
+#define BLUR_LENGTH 7
+
+typedef struct  {
+    double x, y, z;
+    double dz;
+    double screen_x[BLUR_LENGTH], screen_y[BLUR_LENGTH];
+} Star;
+
+#define NUM_STARS 2500
+
+static Star stars[NUM_STARS];
+
+#define STAR_MIN_X -5000.
+#define STAR_MAX_X 5000.
+
+#define STAR_MIN_Y -5000.
+#define STAR_MAX_Y 5000.
+
+#define STAR_MIN_Z 100.
+#define STAR_MAX_Z 1000.
+
+#define STAR_MIN_DZ .5
+#define STAR_MAX_DZ 1.5
+
+static __inline__ double randrange(double min, double max) {
+    return min + (rand() % (int)(max - min));
+}
+
+static void init_starfield(int width, int height) {
+    for(int i=0; i<NUM_STARS; i++) {
+        stars[i].x = randrange(STAR_MIN_X, STAR_MAX_X);
+        stars[i].y = randrange(STAR_MIN_Y, STAR_MAX_Y);
+        stars[i].z = randrange(STAR_MIN_Z, STAR_MAX_Z);
+        stars[i].dz = randrange(STAR_MIN_DZ, STAR_MAX_DZ);
+    }
+}
+
+static __inline__ void set_pixel(AndroidBitmapInfo *info, void *pixels, int x, int y, uint16_t color) {
+    pixels = (char *)pixels + (info->stride * y);
+    uint16_t *line = (uint16_t*)pixels;
+    line[x] = color;
+}
+
+static __inline__ void inc_pixel(AndroidBitmapInfo *info, void *pixels, int x, int y, uint16_t color) {
+    pixels = (char *)pixels + (info->stride * y);
+    uint16_t *line = (uint16_t*)pixels;
+    line[x] += color;
+}
+
+static __inline__ void set_wupixel(AndroidBitmapInfo *info, void *pixels, double x, double y, int bri) {
+    set_pixel(info, pixels, x, y, make565(bri, bri, bri));
+    set_pixel(info, pixels, x+1, y, make565(bri, bri, bri));
+    set_pixel(info, pixels, x, y+1, make565(bri, bri, bri));
+    set_pixel(info, pixels, x+1, y+1, make565(bri, bri, bri));
+}
+
+static __inline__ void inc_wupixel(AndroidBitmapInfo *info, void *pixels, double x, double y, int bri) {
+
+    double fx = x - floor(x);
+    double fy = y - floor(y);
+
+    int btl = (int)round((1-fx) * (1-fy) * bri);
+    int btr = (int)round((fx)  * (1-fy) * bri);
+    int bbl = (int)round((1-fx) *  (fy)  * bri);
+    int bbr = (int)round((fx)  *  (fy)  * bri);
+
+    inc_pixel(info, pixels, x, y, make565(btl, btl, btl));
+    inc_pixel(info, pixels, x+1, y, make565(btr, btr, btr));
+    inc_pixel(info, pixels, x, y+1, make565(bbl, bbl, bbl));
+    inc_pixel(info, pixels, x+1, y+1, make565(bbr, bbr, bbr));
+
+}
+
+JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEnv *env, jobject obj, jobject bitmap, jlong  time_ms)
+{
+    AndroidBitmapInfo  info;
+    void*              pixels;
+    int                ret;
+    static Stats       stats;
+    static int         init;
+    static int         width, height;
+
+    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
+        return;
+    }
+
+    if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
+        LOGE("Bitmap format is not RGB_565 !");
+        return;
+    }
+
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
+        LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
+    }
+
+    if (width != info.width || height != info.height) {
+        init = 0;
+    }
+
+    width = info.width;
+    height = info.height;
+
+    if (!init) {
+        init_starfield(info.width, info.height);
+        stats_init(&stats);
+        init = 1;
+    }
+
+    stats_startFrame(&stats);
+
+    /* final frontier */
+
+    for (int i=0; i<NUM_STARS; i++) {
+
+        Star *star = &stars[i];
+
+        for (int j=0; j<BLUR_LENGTH; j++) {
+            if (star->screen_x[j] >= 0 && star->screen_y[j] >= 0)
+                set_wupixel(&info, pixels, star->screen_x[j], star->screen_y[j], 0);
+        }
+
+        for (int j=BLUR_LENGTH-2; j>=0; j--) {
+            star->screen_x[j+1] = star->screen_x[j];
+            star->screen_y[j+1] = star->screen_y[j];
+        }
+
+        star->z -= star->dz;
+
+        star->screen_x[0] = (star->x / star->z * 100.) + ((double)width / 2.);
+        star->screen_y[0] = (star->y / star->z * 100.) + ((double)height / 2.);
+
+        int on_screen = star->screen_x[0] >= 0 && star->screen_x[0] < width && star->screen_y[0] >= 0 && star->screen_y[0] < height;
+
+        if (on_screen) {
+
+            int dx = star->screen_x[1] - star->screen_x[0];
+            int dy = star->screen_y[1] - star->screen_y[0];
+            double length = sqrt(dx*dx + dy*dy);
+
+            double bri = ((255./5.) * star->dz) * (1000. / star->z);
+            if (length > 1.)
+                bri /= length;
+
+            for (int j=0; j<BLUR_LENGTH; j++)
+                if (star->screen_x[j] >= 0 && star->screen_y[j] >= 0)
+                    inc_wupixel(&info, pixels, star->screen_x[j], star->screen_y[j], bri);
+        }
+
+        if (!on_screen || star->z < 0.) {
+            star->x = randrange(STAR_MIN_X, STAR_MAX_X);
+            star->y = randrange(STAR_MIN_Y, STAR_MAX_Y);
+            star->z = randrange(STAR_MIN_Z, STAR_MAX_Z);
+            star->dz = randrange(STAR_MIN_DZ, STAR_MAX_DZ);
+
+            for (int j=0; j<BLUR_LENGTH; j++) {
+                star->screen_x[j] = -1;
+                star->screen_y[j] = -1;
+            }
+        }
+
+    }
+
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    stats_endFrame(&stats);
 }
