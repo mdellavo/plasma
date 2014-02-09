@@ -1,14 +1,16 @@
 apply plugin: 'android'
 
-def getVersionCode = { ->
+dependencies {
+    compile "com.android.support:appcompat-v7:18.0.+"
+}
 
+def getVersionCode = { ->
     def code = project.hasProperty('versionCode') ? versionCode.toInteger() : -1
     println "VersionCode is set to $code"
     return code
 }
 
 def getVersionName = { ->
-
     def name = project.hasProperty('versionName') ? versionName : ""
     println "VersionName is set to $name"
     return name

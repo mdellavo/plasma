@@ -29,7 +29,7 @@ public class FireView extends EffectView {
 
     @Override
     protected int getScale() {
-        return 2;
+        return 4;
     }
 
     /* implementend by libplasma.so */

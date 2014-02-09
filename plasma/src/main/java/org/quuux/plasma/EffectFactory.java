@@ -6,11 +6,14 @@ import android.preference.PreferenceManager;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class EffectFactory {
 
     private static final String TAG = Log.buildTag(EffectFactory.class);
+
+    public static List<Class<? extends EffectView>> EFFECTS = Arrays.asList(FireView.class, PlasmaView.class, StarFieldView.class);
 
     public static EffectView getEffect(final Context context, Class<? extends EffectView> klass) {
 

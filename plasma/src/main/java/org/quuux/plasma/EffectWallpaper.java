@@ -9,11 +9,11 @@ import android.view.SurfaceHolder;
 abstract class EffectWallpaper extends WallpaperService {
     private static final String TAG = Log.buildTag(EffectWallpaper.class);
 
-    abstract EffectView getEffect();
+    abstract Class<? extends EffectView> getEffect();
 
     @Override
     public Engine onCreateEngine() {
-        return new EffectEngine(getEffect());
+        return new EffectEngine(EffectFactory.getEffect(getApplicationContext(), getEffect()));
     }
 
     class EffectEngine extends Engine {
