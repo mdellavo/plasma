@@ -50,14 +50,17 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(final View v) {
+
+
+
         switch (v.getId()) {
 
             case R.id.set_wallpaper: {
+                final int cur = mPager.getCurrentItem();
                 final Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
                 intent.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                        new ComponentName(this, PlasmaWallpaper.class));
+                        new ComponentName(this, EffectFactory.WALLPAPERS.get(cur)));
                 startActivity(intent);
-                finish();
             } break;
 
             case R.id.settings: {

@@ -3,6 +3,7 @@ package org.quuux.plasma;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.service.wallpaper.WallpaperService;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -13,7 +14,21 @@ public class EffectFactory {
 
     private static final String TAG = Log.buildTag(EffectFactory.class);
 
-    public static List<Class<? extends EffectView>> EFFECTS = Arrays.asList(FireView.class, PlasmaView.class, StarFieldView.class);
+    // TODO
+    // fireworks
+    // boids :)
+
+    public static List<Class<? extends EffectView>> EFFECTS = Arrays.asList(
+            FireView.class,
+            PlasmaView.class,
+            StarFieldView.class
+    );
+
+    public static List<Class<? extends EffectWallpaper>> WALLPAPERS = Arrays.asList(
+            FireWallpaper.class,
+            PlasmaWallpaper.class,
+            StarFieldWallpaper.class
+    );
 
     public static EffectView getEffect(final Context context, Class<? extends EffectView> klass) {
 
