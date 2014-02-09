@@ -17,6 +17,8 @@ public class EffectFactory {
     // TODO
     // fireworks
     // boids :)
+    // metaballs
+    // rain
 
     public static List<Class<? extends EffectView>> EFFECTS = Arrays.asList(
             FireView.class,
