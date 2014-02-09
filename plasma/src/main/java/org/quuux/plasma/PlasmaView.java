@@ -35,6 +35,11 @@ class PlasmaView extends EffectView {
         renderPlasma(bitmap, t);
     }
 
+    @Override
+    protected int getScale() {
+        return 2;
+    }
+
     /* implementend by libplasma.so */
     private static native void renderPlasma(final Bitmap bitmap, final long t);
 

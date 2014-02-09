@@ -27,6 +27,11 @@ public class FireView extends EffectView {
         renderFire(bitmap, t);
     }
 
+    @Override
+    protected int getScale() {
+        return 2;
+    }
+
     /* implementend by libplasma.so */
     private static native void renderFire(final Bitmap bitmap, final long t);
 

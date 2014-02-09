@@ -40,6 +40,7 @@ public abstract class EffectView extends View {
 
 
     private void init(final Context context) {
+        mFactor = getScale();
         mStartTime = System.currentTimeMillis();
     }
 
@@ -66,6 +67,7 @@ public abstract class EffectView extends View {
     }
 
     protected abstract void render(final Bitmap bitmap, long t);
+    protected abstract int getScale();
 
     private void allocate() {
         mBitmap = Bitmap.createBitmap(mWidth / mFactor, mHeight / mFactor, Bitmap.Config.RGB_565);

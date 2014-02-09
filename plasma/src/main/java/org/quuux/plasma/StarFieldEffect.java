@@ -27,6 +27,11 @@ public class StarFieldEffect extends EffectView {
         renderStarField(bitmap, t);
     }
 
+    @Override
+    protected int getScale() {
+        return 4;
+    }
+
     /* implementend by libplasma.so */
     private static native void renderStarField(final Bitmap bitmap, final long t);
 

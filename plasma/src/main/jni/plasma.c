@@ -40,6 +40,8 @@
 #define min(x, y) ((x) < (y)) ? (x) : (y)
 #endif
 
+//srand((unsigned)time(NULL));
+
 /* Return current time in milliseconds */
 static double now_ms(void)
 {
@@ -595,7 +597,7 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_FireView_renderFire(JNIEnv *env, jo
     stats_endFrame(&stats);
 }
 
-#define BLUR_LENGTH 7
+#define BLUR_LENGTH 3
 
 typedef struct  {
     double x, y, z;
@@ -603,9 +605,20 @@ typedef struct  {
     double screen_x[BLUR_LENGTH], screen_y[BLUR_LENGTH];
 } Star;
 
+typedef struct {
+    double rot_x, rot_y, rot_z;
+    double rot_dx, rot_dy, rot_dz;
+    double rot_ax, rot_ay, rot_az;
+} Camera;
+
+static Camera camera;
+
 #define NUM_STARS 2500
 
 static Star stars[NUM_STARS];
+
+#define CAMERA_STEP .1
+#define DAMPING .4
 
 #define STAR_MIN_X -5000.
 #define STAR_MAX_X 5000.
@@ -617,13 +630,22 @@ static Star stars[NUM_STARS];
 #define STAR_MAX_Z 1000.
 
 #define STAR_MIN_DZ .5
-#define STAR_MAX_DZ 1.5
+#define STAR_MAX_DZ 2.
+
+#define PI 3.1415926535897932384626433832795
+
+#define radians(angle) ((angle * PI) / 180.)
 
 static __inline__ double randrange(double min, double max) {
-    return min + (rand() % (int)(max - min));
+    double p = ((double)rand()/(double)RAND_MAX);
+    return min + (p * (max - min));
 }
 
 static void init_starfield(int width, int height) {
+    camera.rot_x = camera.rot_y = camera.rot_z = 0;
+    camera.rot_dx = camera.rot_dy = camera.rot_dz = 0;
+    camera.rot_ax = camera.rot_ay = camera.rot_az = 0;
+
     for(int i=0; i<NUM_STARS; i++) {
         stars[i].x = randrange(STAR_MIN_X, STAR_MAX_X);
         stars[i].y = randrange(STAR_MIN_Y, STAR_MAX_Y);
@@ -656,10 +678,10 @@ static __inline__ void inc_wupixel(AndroidBitmapInfo *info, void *pixels, double
     double fx = x - floor(x);
     double fy = y - floor(y);
 
-    int btl = (int)round((1-fx) * (1-fy) * bri);
-    int btr = (int)round((fx)  * (1-fy) * bri);
-    int bbl = (int)round((1-fx) *  (fy)  * bri);
-    int bbr = (int)round((fx)  *  (fy)  * bri);
+    int btl = (int)round((1.-fx) * (1.-fy) * (double)bri);
+    int btr = (int)round((fx)  * (1.-fy) * (double)bri);
+    int bbl = (int)round((1.-fx) *  (fy)  * (double)bri);
+    int bbr = (int)round((fx)  *  (fy)  * (double)bri);
 
     inc_pixel(info, pixels, x, y, make565(btl, btl, btl));
     inc_pixel(info, pixels, x+1, y, make565(btr, btr, btr));
@@ -667,6 +689,31 @@ static __inline__ void inc_wupixel(AndroidBitmapInfo *info, void *pixels, double
     inc_pixel(info, pixels, x+1, y+1, make565(bbr, bbr, bbr));
 
 }
+
+static __inline__ double rotate_x(double *x, double *y, double *z, double angle) {
+   double rad = radians(angle);
+   double cosa = cos(rad);
+   double sina = sin(rad);
+   *y = *y * cosa - *z * sina;
+   *z = *y * sina + *z * cosa;
+}
+
+static __inline__ double rotate_y(double *x, double *y, double *z, double angle) {
+   double rad = radians(angle);
+   double cosa = cos(rad);
+   double sina = sin(rad);
+   *z = *z * cosa - *x * sina;
+   *x = *z * sina + *x * cosa;
+}
+
+static __inline__ double rotate_z(double *x, double *y, double *z, double angle) {
+   double rad = radians(angle);
+   double cosa = cos(rad);
+   double sina = sin(rad);
+   *x = *x * cosa - *y * sina;
+   *y = *x * sina + *y * cosa;
+}
+
 
 JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEnv *env, jobject obj, jobject bitmap, jlong  time_ms)
 {
@@ -706,6 +753,26 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEn
 
     stats_startFrame(&stats);
 
+    camera.rot_ax += randrange(-CAMERA_STEP, CAMERA_STEP);
+    camera.rot_ay += randrange(-CAMERA_STEP, CAMERA_STEP);
+    camera.rot_az += randrange(-CAMERA_STEP, CAMERA_STEP);
+
+    camera.rot_dx += camera.rot_ax;
+    camera.rot_dy += camera.rot_ay;
+    camera.rot_dz += camera.rot_az;
+
+    camera.rot_ax *= DAMPING;
+    camera.rot_ay *= DAMPING;
+    camera.rot_az *= DAMPING;
+
+    camera.rot_dx *= DAMPING;
+    camera.rot_dy *= DAMPING;
+    camera.rot_dz *= DAMPING;
+
+    camera.rot_x = (camera.rot_x + camera.rot_dx) * DAMPING;
+    camera.rot_y = (camera.rot_y + camera.rot_dy) * DAMPING;
+    camera.rot_z = (camera.rot_z + camera.rot_dz) * DAMPING;
+
     /* final frontier */
 
     for (int i=0; i<NUM_STARS; i++) {
@@ -722,10 +789,21 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEn
             star->screen_y[j+1] = star->screen_y[j];
         }
 
+        // move
         star->z -= star->dz;
 
-        star->screen_x[0] = (star->x / star->z * 100.) + ((double)width / 2.);
-        star->screen_y[0] = (star->y / star->z * 100.) + ((double)height / 2.);
+        // rotate
+        double tmp_x = star->x;
+        double tmp_y = star->y;
+        double tmp_z = star->z;
+
+        rotate_x(&tmp_x, &tmp_y, &tmp_z, camera.rot_x);
+        rotate_y(&tmp_x, &tmp_y, &tmp_z, camera.rot_y);
+        rotate_z(&tmp_x, &tmp_y, &tmp_z, camera.rot_z);
+
+        // project
+        star->screen_x[0] = (tmp_x / tmp_z * 100.) + ((double)width / 2.);
+        star->screen_y[0] = (tmp_y / tmp_z * 100.) + ((double)height / 2.);
 
         int on_screen = star->screen_x[0] >= 0 && star->screen_x[0] < width && star->screen_y[0] >= 0 && star->screen_y[0] < height;
 
@@ -735,9 +813,10 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEn
             int dy = star->screen_y[1] - star->screen_y[0];
             double length = sqrt(dx*dx + dy*dy);
 
-            double bri = ((255./5.) * star->dz) * (1000. / star->z);
-            if (length > 1.)
-                bri /= length;
+            //double bri = ((255./5.) * star->dz) * (1000. / star->z);
+            double bri = (50000.*star->dz) / star->z;
+//            if (length > 1.)
+//                bri /= length;
 
             for (int j=0; j<BLUR_LENGTH; j++)
                 if (star->screen_x[j] >= 0 && star->screen_y[j] >= 0)
