@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Display;
 import android.view.ViewGroup;
 import android.widget.Button;
 
@@ -40,13 +39,10 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
         moreButton.setOnClickListener(this);
 
         final ViewGroup container = (ViewGroup) findViewById(R.id.plasma_container);
-        EffectFactory.getEffect(this, new EffectFactory.Listener() {
-            @Override
-            public void effectChanged(final EffectView view) {
-                container.removeAllViews();
-                container.addView(view);
-            }
-        });
+        container.removeAllViews();
+
+        final EffectView view = EffectFactory.getEffect(this, PlasmaView.class);
+        container.addView(view);
     }
 
     @Override
@@ -56,8 +52,9 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
             case R.id.set_wallpaper: {
                 final Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
                 intent.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                        new ComponentName(this, PlasmaService.class));
+                        new ComponentName(this, PlasmaWallpaper.class));
                 startActivity(intent);
+                finish();
             } break;
 
             case R.id.settings: {

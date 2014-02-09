@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Plasma!</string>
-    <string name="wallpaper_description">A nice plasma animation</string>
-    <string name="wallpaper_label">Plasma!</string>
+    <string name="plasma_wallpaper_description">A nice plasma animation</string>
+    <string name="plasma_wallpaper_label">Plasma!</string>
     <string name="set_wallpaper">Set as Wallpaper</string>
     <string name="settings">Settings...</string>
     <string name="more">More...</string>
+    <string name="fire_wallpaper_description">A raging inferno!</string>
+    <string name="fire_wallpaper_label">Fire</string>
+    <string name="starfield_wallpaper_label">Space Voyage</string>
+    <string name="starfield_wallpaper_description">The final frontier</string>
 </resources>

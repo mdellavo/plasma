@@ -613,12 +613,12 @@ typedef struct {
 
 static Camera camera;
 
-#define NUM_STARS 2500
+#define NUM_STARS 10000
 
 static Star stars[NUM_STARS];
 
-#define CAMERA_STEP .1
-#define DAMPING .4
+#define CAMERA_STEP .0001
+#define DAMPING .8
 
 #define STAR_MIN_X -5000.
 #define STAR_MAX_X 5000.
@@ -815,8 +815,8 @@ JNIEXPORT void JNICALL Java_org_quuux_plasma_StarFieldView_renderStarField(JNIEn
 
             //double bri = ((255./5.) * star->dz) * (1000. / star->z);
             double bri = (50000.*star->dz) / star->z;
-//            if (length > 1.)
-//                bri /= length;
+            if (length > 1.)
+                bri /= length;
 
             for (int j=0; j<BLUR_LENGTH; j++)
                 if (star->screen_x[j] >= 0 && star->screen_y[j] >= 0)

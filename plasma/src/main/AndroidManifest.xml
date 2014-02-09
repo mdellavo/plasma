@@ -8,9 +8,9 @@
         android:label="@string/app_name" >
 
         <service
-            android:name=".PlasmaService"
+            android:name=".PlasmaWallpaper"
             android:enabled="true"
-            android:label="@string/wallpaper_label"
+            android:label="@string/plasma_wallpaper_label"
             android:permission="android.permission.BIND_WALLPAPER" >
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" >
@@ -20,6 +20,39 @@
             <meta-data
                 android:name="android.service.wallpaper"
                 android:resource="@xml/plasma_wallpaper" >
+            </meta-data>
+        </service>
+
+        <service
+            android:name=".FireWallpaper"
+            android:enabled="true"
+            android:label="@string/fire_wallpaper_label"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" >
+                </action>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/fire_wallpaper" >
+            </meta-data>
+        </service>
+
+
+        <service
+            android:name=".StarFieldWallpaper"
+            android:enabled="true"
+            android:label="@string/starfield_wallpaper_label"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" >
+                </action>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/spae_wallpaper" >
             </meta-data>
         </service>
 

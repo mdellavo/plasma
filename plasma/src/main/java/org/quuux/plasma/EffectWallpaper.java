@@ -6,15 +6,17 @@ import android.os.Handler;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
-public class PlasmaService extends WallpaperService {
-    private static final String TAG = Log.buildTag(PlasmaService.class);
+abstract class EffectWallpaper extends WallpaperService {
+    private static final String TAG = Log.buildTag(EffectWallpaper.class);
+
+    abstract EffectView getEffect();
 
     @Override
     public Engine onCreateEngine() {
-        return new PlasmaEngine();
+        return new EffectEngine(getEffect());
     }
 
-    class PlasmaEngine extends WallpaperService.Engine {
+    class EffectEngine extends Engine {
         private EffectView mView;
         private final Handler mHandler = new Handler();
 
@@ -25,16 +27,14 @@ public class PlasmaService extends WallpaperService {
             }
         };
 
+        public EffectEngine(final EffectView effect) {
+            mView = effect;
+        }
+
         @Override
         public void onSurfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
             super.onSurfaceChanged(holder, format, width, height);
-            EffectFactory.getEffect(getApplicationContext(), new EffectFactory.Listener() {
-                @Override
-                public void effectChanged(final EffectView view) {
-                    mView = view;
-                    mView.onSizeChanged(width, height, 0, 0);
-                }
-            });
+            mView.onSizeChanged(width, height, 0, 0);
         }
 
         @Override
@@ -88,8 +88,5 @@ public class PlasmaService extends WallpaperService {
         private void onDraw(final Canvas canvas) {
             mView.draw(canvas);
         }
-
-
     }
-
 }
