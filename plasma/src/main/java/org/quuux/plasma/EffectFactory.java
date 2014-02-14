@@ -23,13 +23,16 @@ public class EffectFactory {
     public static List<Class<? extends EffectView>> EFFECTS = Arrays.asList(
             FireView.class,
             PlasmaView.class,
-            StarFieldView.class
+            StarFieldView.class,
+            MetaBallsView.class
     );
 
     public static List<Class<? extends EffectWallpaper>> WALLPAPERS = Arrays.asList(
             FireWallpaper.class,
             PlasmaWallpaper.class,
-            StarFieldWallpaper.class
+            StarFieldWallpaper.class,
+            MetaBallsWallpaper.class
+
     );
 
     public static EffectView getEffect(final Context context, Class<? extends EffectView> klass) {

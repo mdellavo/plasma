@@ -8,7 +8,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-public abstract class EffectView extends View {
+public abstract class EffectView extends View implements Effect {
 
     static {
         System.loadLibrary("plasma");
@@ -54,7 +54,7 @@ public abstract class EffectView extends View {
     }
 
     @Override
-    protected void onDraw(final Canvas canvas) {
+    public void onDraw(final Canvas canvas) {
 
         mMatrix.reset();
         mMatrix.postScale((float)canvas.getWidth() / (float)mBitmap.getWidth(), (float)canvas.getHeight() / (float)mBitmap.getHeight());

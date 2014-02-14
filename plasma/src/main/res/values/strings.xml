@@ -10,4 +10,6 @@
     <string name="fire_wallpaper_label">Fire</string>
     <string name="starfield_wallpaper_label">Space Voyage</string>
     <string name="starfield_wallpaper_description">The final frontier</string>
+    <string name="metaballs_wallpaper_label">MetaBalls!</string>
+    <string name="meatballs_wallpaper_description">so meta</string>
 </resources>
