@@ -8,6 +8,8 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
+// EffectVIew is a View that
+
 public abstract class EffectView extends View implements Effect {
 
     static {

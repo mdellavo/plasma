@@ -1,8 +1,20 @@
 package org.quuux.plasma;
 
-public class MetaBallsWallpaper extends EffectWallpaper {
+import android.service.wallpaper.WallpaperService;
+import android.view.View;
+
+import net.rbgrn.android.glwallpaperservice.GLWallpaperService;
+
+public class MetaBallsWallpaper extends GLWallpaperService {
+
     @Override
-    Class<? extends EffectView> getEffect() {
-        return MetaBallsView.class;
+    public Engine onCreateEngine() {
+        return new MetaBallsEngine();
+    }
+
+    class MetaBallsEngine extends GLEngine {
+        MetaBallsEngine() {
+            setRenderer(new MetaBallsRenderer());
+        }
     }
 }

@@ -2,6 +2,7 @@ apply plugin: 'android'
 
 dependencies {
     compile "com.android.support:appcompat-v7:18.0.+"
+    compile fileTree(dir: 'libs', include: '*.jar')
 }
 
 def getVersionCode = { ->

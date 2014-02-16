@@ -5,11 +5,12 @@ import android.graphics.Canvas;
 import android.os.Handler;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
+import android.view.View;
 
 abstract class EffectWallpaper extends WallpaperService {
     private static final String TAG = Log.buildTag(EffectWallpaper.class);
 
-    abstract Class<? extends EffectView> getEffect();
+    abstract Class<? extends View> getEffect();
 
     @Override
     public Engine onCreateEngine() {
@@ -17,7 +18,7 @@ abstract class EffectWallpaper extends WallpaperService {
     }
 
     class EffectEngine extends Engine {
-        private EffectView mView;
+        private View mView;
         private final Handler mHandler = new Handler();
 
         private final Runnable mDrawRunnable = new Runnable() {
@@ -27,14 +28,14 @@ abstract class EffectWallpaper extends WallpaperService {
             }
         };
 
-        public EffectEngine(final EffectView effect) {
+        public EffectEngine(final View effect) {
             mView = effect;
         }
 
         @Override
         public void onSurfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
             super.onSurfaceChanged(holder, format, width, height);
-            mView.onSizeChanged(width, height, 0, 0);
+            //mView.onSizeChanged(width, height, 0, 0);
         }
 
         @Override
