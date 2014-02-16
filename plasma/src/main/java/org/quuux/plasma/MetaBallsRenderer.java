@@ -21,9 +21,9 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
 
     private static final String TAG = Log.buildTag(MetaBallsRenderer.class);
 
-    private static final int SIZE = 512;
+    private static final int SIZE = 256;
     private static final int RADIUS = SIZE / 2;
-    private static final int NUM_BALLS = 75;
+    private static final int NUM_BALLS = 250;
     private static final double VELOCITY = 2.5;
 
     private int mWidth;
@@ -56,7 +56,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
     public void onSurfaceCreated(final GL10 gl, final EGLConfig config) {
         GLHelper.init(gl);
 
-        mTexture = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_4444);
+        mTexture = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888);
         renderTexture();
 
         Log.d(TAG, "renderer: %s", GLHelper.getRenderer());
@@ -70,12 +70,10 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
 
         gl.glEnable(GL10.GL_DITHER);
         gl.glEnable(GL10.GL_ALPHA_TEST);
-        gl.glEnable(GL10.GL_CULL_FACE);
-        gl.glEnable(GL10.GL_COLOR_MATERIAL);
         gl.glDisable(GL10.GL_DEPTH_TEST);
 
         gl.glHint(GL10.GL_POINT_SMOOTH_HINT,GL10.GL_NICEST);
-        gl.glAlphaFunc(GL10.GL_GREATER, 0.02f);
+        gl.glAlphaFunc(GL10.GL_GREATER, 0.01f);
 
         gl.glBlendFunc (GL10.GL_SRC_ALPHA, GL10.GL_ONE);
 
@@ -84,7 +82,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         mColors = GLHelper.floatBuffer(NUM_BALLS * 4);
 
         gl.glEnable(GL11.GL_POINT_SPRITE_OES);
-        gl.glActiveTexture(GL10.GL_TEXTURE0);
+        //gl.glActiveTexture(GL10.GL_TEXTURE0);
 
         int[] textures = new int[1];
 
@@ -102,7 +100,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         for(int i = 0; i < mTexture.getHeight(); i++) {
             for(int j = 0; j < mTexture.getWidth(); j++) {
                 int color = mTexture.getPixel(j, i);
-                buffer[0] = (byte) Color.red(color);
+                buffer[0] = (byte)Color.red(color);
                 buffer[1] = (byte)Color.green(color);
                 buffer[2] = (byte)Color.blue(color);
                 buffer[3] = (byte)Color.alpha(color);
@@ -157,7 +155,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
             mColors.put(Color.red(color) / 255f);
             mColors.put(Color.green(color) / 255f);
             mColors.put(Color.blue(color) / 255f);
-            mColors.put(1f);
+            mColors.put(.6f);
 
             mSizes.put(SIZE);
         }
@@ -167,7 +165,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         mSizes.position(0);
 
 
-        gl.glClearColor(0, 0, 0, .001f);
+        gl.glClearColor(0, 0, 0, .1f);
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
         gl.glMatrixMode(GL10.GL_PROJECTION);
@@ -200,16 +198,20 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
     }
 
     private double fallOff(final double distance) {
-        final double rv;
-        if (distance < .333) {
-            rv = 1. - (3. * Math.pow(distance, 2.));
-        } else if (distance < 1) {
-            rv = 1.5 * Math.pow(1 - distance, 2.);
-        } else {
-            rv = 0;
-        }
 
-        return rv;
+        return distance < 1 ? Math.pow(1 - Math.pow(distance, 2.f), 2.f) : 0;
+
+//
+//        final double rv;
+//        if (distance < .333) {
+//            rv = 1. - (3. * Math.pow(distance, 2.));
+//        } else if (distance < .8) {
+//            rv = 1.5 * Math.pow(1 - distance, 2.);
+//        } else {
+//            rv = 0;
+//        }
+//
+//        return rv;
     }
 
     private int clamp(double val, double min, double max) {
@@ -220,7 +222,7 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
 
         Log.d(TAG, "rendering texture");
 
-        mTexture.eraseColor(Color.TRANSPARENT);
+        mTexture.eraseColor(Color.BLACK);
 
         final int r = 255;
         final int g = 255;
@@ -262,10 +264,10 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            if (ball.x < 0 || ball.x > mWidth)
+            if (ball.x < RADIUS || ball.x > mWidth - RADIUS)
                 ball.dx *= -1;
 
-            if (ball.y < 0 || ball.y > mHeight)
+            if (ball.y < RADIUS || ball.y > mHeight - RADIUS)
                 ball.dy *= -1;
 
             ball.age++;
