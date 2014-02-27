@@ -2,13 +2,10 @@ package org.quuux.plasma;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.opengl.GLSurfaceView;
-import android.opengl.GLU;
+import android.opengl.Matrix;
 
-import net.rbgrn.android.glwallpaperservice.GLWallpaperService;
+import static android.opengl.GLES20.*;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +14,8 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
-class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Renderer {
+
+class MetaBallsRenderer extends EffectRenderer {
 
     private static final String TAG = Log.buildTag(MetaBallsRenderer.class);
 
@@ -26,11 +24,10 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
     private static final int NUM_BALLS = 250;
     private static final double VELOCITY = 2.5;
 
-    private int mWidth;
-    private int mHeight;
-    private Bitmap mTexture;
-    private List<MetaBall> mBalls = new ArrayList<MetaBall>(NUM_BALLS);
-
+    private static final String POSITION_LOCATION = "aPosition";
+    private static final String COLOR_LOCATION = "uColor";
+    private static final String SIZES_LOCATION = "uSize";
+    private static final String MATRIX_LOCATION = "uMatrix";
 
     static class MetaBall {
         int age;
@@ -45,91 +42,101 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         }
     }
 
+    private int mWidth;
+    private int mHeight;
+    private Bitmap mTexture;
+    private List<MetaBall> mBalls = new ArrayList<MetaBall>(NUM_BALLS);
 
     int mTextureId;
-    private FloatBuffer mVertices;
-    private FloatBuffer mSizes;
-    private FloatBuffer mColors;
+
+    private FloatBuffer mVertices = GLHelper.floatBuffer(NUM_BALLS * 3);
+    private FloatBuffer mSizes= GLHelper.floatBuffer(NUM_BALLS);
+    private FloatBuffer mColors = GLHelper.floatBuffer(NUM_BALLS * 4);
     private float[] mHsv = new float[3];
+    private float[] mMatrix = new float[16];
+
+    private String mFragmentShader;
+    private String mVertexShader;
+    private int mProgramId;
+    private int mPositionLocation;
+    private int mColorLocation;
+    private int mSizesLocation;
+    private int mMatrixLocation;
+
+    public void setFragmentShader(final String shader) {
+        Log.d(TAG, "fragment shader = %s", shader);
+        mFragmentShader = shader;
+    }
+
+    public void setVertextShader(final String shader) {
+        Log.d(TAG, "vertex shader = %s", shader);
+        mVertexShader = shader;
+    }
 
     @Override
-    public void onSurfaceCreated(final GL10 gl, final EGLConfig config) {
-        GLHelper.init(gl);
+    public void onSurfaceCreated(final GL10 unused, final EGLConfig config) {
+        Log.d(TAG, "renderer: %s", GLHelper.getRenderer());
+        Log.d(TAG, "extensions: %s", GLHelper.getExtensions());
 
         mTexture = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888);
         renderTexture();
 
-        Log.d(TAG, "renderer: %s", GLHelper.getRenderer());
-        Log.d(TAG, "extensions: %s", GLHelper.getExtensions());
+        //mTextureId = loadTexture(mTexture);
 
-        gl.glShadeModel(GL10.GL_SMOOTH);
-        gl.glEnable(GL10.GL_POINT_SMOOTH);
-        gl.glEnable(GL10.GL_TEXTURE_2D);
-        gl.glEnable(GL10.GL_TEXTURE);
-        gl.glEnable(GL10.GL_BLEND);
+        mProgramId = GLHelper.linkProgram(
+                GLHelper.compileShader(GL_FRAGMENT_SHADER, mFragmentShader),
+                GLHelper.compileShader(GL_VERTEX_SHADER, mVertexShader)
+        );
+        GLHelper.validateProgram(mProgramId);
 
-        gl.glEnable(GL10.GL_DITHER);
-        gl.glEnable(GL10.GL_ALPHA_TEST);
-        gl.glDisable(GL10.GL_DEPTH_TEST);
+        glUseProgram(mProgramId);
 
-        gl.glHint(GL10.GL_POINT_SMOOTH_HINT,GL10.GL_NICEST);
-        gl.glAlphaFunc(GL10.GL_GREATER, 0.01f);
+        mPositionLocation = glGetAttribLocation(mProgramId, POSITION_LOCATION);
+        mColorLocation = glGetUniformLocation(mProgramId, COLOR_LOCATION);
+        mSizesLocation = glGetUniformLocation(mProgramId, SIZES_LOCATION);
+        mMatrixLocation = glGetUniformLocation(mProgramId, MATRIX_LOCATION);
 
-        gl.glBlendFunc (GL10.GL_SRC_ALPHA, GL10.GL_ONE);
+        glUniform4f(mColorLocation, 1, 1, 1, 1);
+        glUniform1f(mSizesLocation, 10);
 
-        mVertices = GLHelper.floatBuffer(NUM_BALLS * 3);
-        mSizes = GLHelper.floatBuffer(NUM_BALLS);
-        mColors = GLHelper.floatBuffer(NUM_BALLS * 4);
-
-        gl.glEnable(GL11.GL_POINT_SPRITE_OES);
-        //gl.glActiveTexture(GL10.GL_TEXTURE0);
-
-        int[] textures = new int[1];
-
-        gl.glGenTextures(1, textures, 0);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-        gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE, GL10.GL_MODULATE);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
-        ByteBuffer imageBuffer = ByteBuffer.allocateDirect(mTexture.getHeight() * mTexture.getWidth() * 4);
-
-        imageBuffer.order(ByteOrder.nativeOrder());
-
-        byte buffer[] = new byte[4];
-
-        for(int i = 0; i < mTexture.getHeight(); i++) {
-            for(int j = 0; j < mTexture.getWidth(); j++) {
-                int color = mTexture.getPixel(j, i);
-                buffer[0] = (byte)Color.red(color);
-                buffer[1] = (byte)Color.green(color);
-                buffer[2] = (byte)Color.blue(color);
-                buffer[3] = (byte)Color.alpha(color);
-                imageBuffer.put(buffer);
-            }
-        }
-
-        imageBuffer.position(0);
-
-        gl.glTexImage2D(GL10.GL_TEXTURE_2D, 0, GL10.GL_RGBA, mTexture.getWidth(), mTexture.getHeight(), 0, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, imageBuffer);
-
-        mTextureId = textures[0];
-
-        //((GL11)gl).glPointParameterf(GL11.GL_POINT_SIZE_MAX, 10000.0f);
-        //((GL11)gl).glPointParameterf(GL11.GL_POINT_SIZE_MIN, 1.0f);
+        glVertexAttribPointer(mPositionLocation, 3, GL_FLOAT, false, 0, mVertices);
+        glEnableVertexAttribArray(mPositionLocation);
     }
 
     @Override
-    public void onSurfaceChanged(final GL10 gl, final int width, final int height) {
+    public void onSurfaceChanged(final GL10 unused, final int width, final int height) {
+        glViewport(0, 0, width, height);
 
-
-        gl.glViewport(0, 0, width, height);
         mWidth = width;
         mHeight = height;
+
+        Matrix.orthoM(mMatrix, 0, -1, 1, 1, -1, 1, -1);
+        glUniformMatrix4fv(mMatrixLocation, 1, false, mMatrix, 0);
+
+        for (int i=0; i<NUM_BALLS; i++) {
+            final MetaBall ball = new MetaBall(
+                    RandomGenerator.randomRange(0, mWidth),
+                    RandomGenerator.randomRange(0, mHeight),
+                    RandomGenerator.randomRange(-VELOCITY, VELOCITY),
+                    RandomGenerator.randomRange(-VELOCITY, VELOCITY)
+            );
+            ball.age += RandomGenerator.randomInt(0, 50);
+            mBalls.add(ball);
+        }
     }
 
     @Override
-    public void onDrawFrame(final GL10 gl) {
+    public void onDrawFrame(final GL10 unused) {
 
+        tick();
+        render();
+
+        glClearColor(0, 0, 0, .1f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glDrawArrays(GL_POINTS, 0, NUM_BALLS);
+    }
+
+    private void render() {
         mColors.clear();
         mVertices.clear();
         mSizes.clear();
@@ -138,12 +145,11 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         mColors.limit(NUM_BALLS * 4);
         mSizes.limit(NUM_BALLS);
 
-        tick();
         for(int i=0; i<NUM_BALLS; i++) {
             final MetaBall ball = mBalls.get(i);
 
-            mVertices.put((float) ball.x);
-            mVertices.put((float) ball.y);
+            mVertices.put((float) ball.x / (float)SIZE);
+            mVertices.put((float) ball.y / (float)SIZE);
             mVertices.put(0);
 
             mHsv[0] = ball.age % 360;
@@ -164,54 +170,10 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
         mColors.position(0);
         mSizes.position(0);
 
-
-        gl.glClearColor(0, 0, 0, .1f);
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
-        gl.glMatrixMode(GL10.GL_PROJECTION);
-        gl.glLoadIdentity();
-        GLU.gluOrtho2D(gl, 0, mWidth, 0, mHeight);
-
-        gl.glMatrixMode(GL10.GL_MODELVIEW);
-        gl.glLoadIdentity();
-
-        gl.glEnableClientState(GL11.GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES);
-        gl.glEnableClientState(GL11.GL_POINT_SIZE_ARRAY_OES);
-        gl.glEnableClientState(GL11.GL_POINT_SPRITE_OES);
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
-
-        gl.glTexEnvf(GL11.GL_POINT_SPRITE_OES, GL11.GL_COORD_REPLACE_OES,
-                GL11.GL_TRUE);
-
-        gl.glColorPointer(4, GL10.GL_FLOAT, 0, mColors);
-        ((GL11)gl).glPointSizePointerOES(GL10.GL_FLOAT, 0, mSizes);
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertices);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureId);
-        gl.glDrawArrays(GL10.GL_POINTS, 0, NUM_BALLS); // XXX
-
-        gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
-        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glDisableClientState(GL11.GL_POINT_SPRITE_OES);
-        gl.glDisableClientState(GL11.GL_POINT_SIZE_ARRAY_OES);
-        gl.glDisableClientState(GL11.GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES);
     }
 
     private double fallOff(final double distance) {
-
         return distance < 1 ? Math.pow(1 - Math.pow(distance, 2.f), 2.f) : 0;
-
-//
-//        final double rv;
-//        if (distance < .333) {
-//            rv = 1. - (3. * Math.pow(distance, 2.));
-//        } else if (distance < .8) {
-//            rv = 1.5 * Math.pow(1 - distance, 2.);
-//        } else {
-//            rv = 0;
-//        }
-//
-//        return rv;
     }
 
     private int clamp(double val, double min, double max) {
@@ -245,30 +207,21 @@ class MetaBallsRenderer implements GLSurfaceView.Renderer, GLWallpaperService.Re
     }
 
     public void tick() {
-        if (mBalls.size() == 0) {
-            for (int i=0; i<NUM_BALLS; i++) {
-                final MetaBall ball = new MetaBall(
-                        RandomGenerator.randomRange(0, mWidth),
-                        RandomGenerator.randomRange(0, mHeight),
-                        RandomGenerator.randomRange(-VELOCITY, VELOCITY),
-                        RandomGenerator.randomRange(-VELOCITY, VELOCITY)
-                );
-                ball.age += RandomGenerator.randomInt(0, 50);
-                mBalls.add(ball);
-            }
-        }
-
         for (int i=0; i<NUM_BALLS; i++) {
             final MetaBall ball = mBalls.get(i);
 
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            if (ball.x < RADIUS || ball.x > mWidth - RADIUS)
-                ball.dx *= -1;
+            if (ball.x < -mWidth/2)
+                ball.dx = Math.abs(ball.dx);
+            else if (ball.x > mWidth/2)
+                ball.dx = -Math.abs(ball.dx);
 
-            if (ball.y < RADIUS || ball.y > mHeight - RADIUS)
-                ball.dy *= -1;
+            if (ball.y < -mWidth/2)
+                ball.dy = Math.abs(ball.dy);
+            else if (ball.y > mHeight/2)
+                ball.dy = -Math.abs(ball.dy);
 
             ball.age++;
         }

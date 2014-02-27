@@ -1,15 +1,13 @@
 package org.quuux.plasma;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLU;
 import android.opengl.GLUtils;
-import android.util.Log;
+import static android.opengl.GLES20.*;
 
-import javax.microedition.khronos.opengles.GL10;
-import javax.microedition.khronos.opengles.GL11;
-import javax.microedition.khronos.opengles.GL11Ext;
-
-import java.util.ArrayList;
+import java.nio.ShortBuffer;
 
 import java.nio.FloatBuffer;
 import java.nio.ByteBuffer;
@@ -26,31 +24,25 @@ class GLHelper
     private static String version;
     private static String extensions;
 
-    public static void init(GL10 gl) {
-        inspect(gl);
-    }
-
-    private static void inspect(GL10 gl) {
-        vendor = gl.glGetString(GL10.GL_VENDOR);
-        renderer = gl.glGetString(GL10.GL_RENDERER);
-        version = gl.glGetString(GL10.GL_VERSION);
-        extensions = gl.glGetString(GL10.GL_EXTENSIONS);
+    public static boolean supportsOpenGL20(final Context context) {
+        final ActivityManager m = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+        return m.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000;
     }
 
     public static String getVendor() {
-        return vendor;
+        return glGetString(GL_VENDOR);
     }    
 
     public static String getRenderer() {
-        return renderer;
+        return glGetString(GL_RENDERER);
     }    
 
     public static String getVersion() {
-        return version;
+        return glGetString(GL_VERSION);
     }    
 
     public static String getExtensions() {
-        return extensions;
+        return glGetString(GL_EXTENSIONS);
     }    
 
     private static boolean hasExtension(String extension) {
@@ -79,6 +71,12 @@ class GLHelper
         ByteBuffer byte_buf = ByteBuffer.allocateDirect(size * 4);
         byte_buf.order(ByteOrder.nativeOrder());
         return byte_buf.asIntBuffer();
+    }
+
+    public static ShortBuffer shortBuffer(int size) {
+        ByteBuffer byte_buf = ByteBuffer.allocateDirect(size * 2);
+        byte_buf.order(ByteOrder.nativeOrder());
+        return byte_buf.asShortBuffer();
     }
 
     public static FloatBuffer floatBuffer(int size) {
@@ -124,66 +122,119 @@ class GLHelper
 
         return rv;
     }
-    
-    private static int createTexture(GL10 gl) {
+
+    public static void checkGlError(String glOperation) {
+        int error;
+        while ((error = glGetError()) != GL_NO_ERROR) {
+            Log.e(TAG, "%s glError -> %s", glOperation, error);
+        }
+    }
+
+    private static int createTexture() {
         int[] textures = new int[1];
-        gl.glGenTextures(1, textures, 0);
+        glGenTextures(1, textures, 0);
 
         if (BuildConfig.DEBUG) Log.d(TAG, "Created Texture: " + textures[0]);
 
         return textures[0];
     }
 
-    public static int loadTexture(GL10 gl, Bitmap bitmap) {
-        int texture = createTexture(gl);
+    public static int loadTexture(final Bitmap bitmap) {
+        int texture = createTexture();
 
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
 
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,
-                GL10.GL_NICEST);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,
-                GL10.GL_NICEST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                GL_NICEST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                GL_NICEST);
 
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S,
-                GL10.GL_REPEAT);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T,
-                GL10.GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                GL_REPEAT);
 
-        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+        GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
+
 
         return texture;
     }
-    
-    private static int createBufferObject(GL10 gl) {
+
+
+    public static int compileShader(int type, String source) {
+        final int id = glCreateShader(type);
+
+        checkGlError("glCreateShader");
+
+        if (id == 0) {
+            Log.e(TAG, "error creating shader");
+            return 0;
+        }
+
+        glShaderSource(id, source);
+        glCompileShader(id);
+
+        final int[] status = new int[1];
+        glGetShaderiv(id, GL_COMPILE_STATUS, status, 0);
+
+        if (status[0] == 0) {
+            final String info = glGetShaderInfoLog(id);
+            Log.e(TAG, "Error compiling shader %s (status: %s) : %s", id, status[0], info);
+            glDeleteShader(id);
+            return 0;
+        }
+
+        return id;
+    }
+
+    public static int linkProgram(final int... shaders) {
+        final int id = glCreateProgram();
+        if (id == 0) {
+            Log.e(TAG, "error creating program");
+            return 0;
+        }
+
+        for (int i=0; i<shaders.length; i++)
+            glAttachShader(id, shaders[i]);
+
+        glLinkProgram(id);
+
+        final int[] status = new int[1];
+
+        glGetProgramiv(id, GL_LINK_STATUS, status, 0);
+        if (status[0] == 0) {
+            final String info = glGetProgramInfoLog(id);
+            Log.e(TAG, "Error linking program %s (status: %s) : %s", id, status[0], info);
+            glDeleteProgram(id);
+            return 0;
+        }
+
+        return id;
+    }
+
+    public static boolean validateProgram(final int id) {
+        glValidateProgram(id);
+        final int[] status = new int[1];
+        glGetProgramiv(id, GL_VALIDATE_STATUS, status, 0);
+        final String info = glGetProgramInfoLog(id);
+        Log.d(TAG, "validing program - status: %s -> %s", status[0], info);
+        return status[0] != 0;
+    }
+
+    private static int createBufferObject() {
         int[] rv = new int[1];
-        ((GL11)gl).glGenBuffers(1, rv, 0);
+        glGenBuffers(1, rv, 0);
         return rv[0];
     }
     
-    public static int loadBufferObject(GL10 gl, FloatBuffer data) {
-        int buffer = createBufferObject(gl);
+    public static int loadBufferObject(FloatBuffer data) {
+        int buffer = createBufferObject();
 
-        ((GL11)gl).glBindBuffer(GL11.GL_ARRAY_BUFFER, buffer);
-        ((GL11)gl).glBufferData(GL11.GL_ARRAY_BUFFER, data.limit() * 4, data, 
-                                GL11.GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, data.limit() * 4, data,
+                GL_STATIC_DRAW);
 
         return buffer;
-    }
-
-    // TODO implement fallback to a single rect if needed
-    public static void drawTexture(GL10 gl, int x, int y, int z, int w, int h) {
-        int[] crop = {0, h, w, -h}; 
-
-        ((GL11)gl).glTexParameteriv(GL10.GL_TEXTURE_2D, 
-                                    GL11Ext.GL_TEXTURE_CROP_RECT_OES, crop, 0);
-
-        ((GL11Ext) gl).glDrawTexfOES(x, y, z, w, h); 
-
-    }
-
-    // TODO implement with fallback to a single rect if needed
-    public static void drawPoints(GL10 gl, FloatBuffer points,
-                                  FloatBuffer sizes, FloatBuffer colors) {
     }
 
     public static Vector3 projectTouchToWorld(int width, int height, float[] modelView, float[] projection, float x, float y) {

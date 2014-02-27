@@ -7,23 +7,20 @@ public class MetaBallsView extends GLEffectView {
 
     private static final String TAG = Log.buildTag(MetaBallsView.class);
 
-
     public MetaBallsView(final Context context) {
         super(context);
-        init(context);
     }
 
     public MetaBallsView(final Context context, final AttributeSet attrs) {
         super(context, attrs);
-        init(context);
-    }
-
-    private void init(final Context context) {
     }
 
     @Override
-    public Renderer getRenderer() {
-        return new MetaBallsRenderer();
+    public EffectRenderer getRenderer() {
+        final MetaBallsRenderer renderer = new MetaBallsRenderer();
+        renderer.setVertextShader(Utils.loadTextFromAssets(getContext(), "shaders/vertex.glsl"));
+        renderer.setFragmentShader(Utils.loadTextFromAssets(getContext(), "shaders/fragment.glsl"));
+        return renderer;
     }
 
 

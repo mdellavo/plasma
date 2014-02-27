@@ -6,6 +6,7 @@ import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
@@ -95,6 +96,10 @@ public class PlasmaActivity extends Activity implements View.OnClickListener {
         public Object instantiateItem(final ViewGroup container, final int position) {
             final View rv = EffectFactory.getEffect(getApplicationContext(), EffectFactory.EFFECTS.get(position));
             container.addView(rv);
+
+            if (rv instanceof GLSurfaceView)
+                ((GLSurfaceView)rv).onResume();
+
             return rv;
         }
 

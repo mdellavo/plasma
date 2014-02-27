@@ -14,7 +14,10 @@ public class MetaBallsWallpaper extends GLWallpaperService {
 
     class MetaBallsEngine extends GLEngine {
         MetaBallsEngine() {
-            setRenderer(new MetaBallsRenderer());
+            final MetaBallsRenderer renderer = new MetaBallsRenderer();
+            renderer.setVertextShader(Utils.loadTextFromAssets(getApplicationContext(), "shaders/vertex.glsl"));
+            renderer.setFragmentShader(Utils.loadTextFromAssets(getApplicationContext(), "shaders/fragment.glsl"));
+            setRenderer(renderer);
         }
     }
 }

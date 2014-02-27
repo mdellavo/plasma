@@ -35,6 +35,12 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/res/assets']
+        }
+    }
+
     buildTypes.debug.jniDebugBuild true
 
     signingConfigs {

@@ -2,13 +2,10 @@ package org.quuux.plasma;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 abstract public class GLEffectView extends GLSurfaceView {
-
 
     public GLEffectView(final Context context) {
         super(context);
@@ -20,11 +17,24 @@ abstract public class GLEffectView extends GLSurfaceView {
         init();
     }
 
-    private void init() {
+    protected void init() {
+        setEGLContextClientVersion(2);
         setRenderer(getRenderer());
+        setRenderMode(RENDERMODE_CONTINUOUSLY);
+        requestRender();
+        invalidate();
     }
 
-    abstract public Renderer getRenderer();
+    abstract public EffectRenderer getRenderer();
 
+    class LoaderTask extends AsyncTask<Void, Void, EffectRenderer> {
+        @Override
+        protected EffectRenderer doInBackground(final Void... params) {
+            return null;
+        }
 
+        @Override
+        protected void onPostExecute(final EffectRenderer renderer) {
+        }
+    }
 }

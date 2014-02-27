@@ -18,11 +18,12 @@ public class EffectFactory {
     // TODO
     // fireworks
     // boids :)
-    // metaballs
     // rain
 
     public static List<Class<? extends View>> EFFECTS =  Arrays.<Class<? extends View>>asList(
             MetaBallsView.class,
+            HeightMapView.class,
+            SkyBoxView.class,
             FireView.class,
             PlasmaView.class,
             StarFieldView.class
@@ -30,6 +31,8 @@ public class EffectFactory {
 
     public static List<Class<? extends WallpaperService>> WALLPAPERS = Arrays.asList(
             MetaBallsWallpaper.class,
+            HeightMapWallpaper.class,
+            SkyBoxWallpaper.class,
             FireWallpaper.class,
             PlasmaWallpaper.class,
             StarFieldWallpaper.class
