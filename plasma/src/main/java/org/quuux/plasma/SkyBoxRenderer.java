@@ -94,7 +94,7 @@ public class SkyBoxRenderer extends EffectRenderer {
             mFaces[i].put(FACES[i]);
             mFaces[i].position(0);
 
-            mTextures[i] = loadTexture(mBitmaps[i]);
+            mTextures[i] = GLHelper.loadTexture(mBitmaps[i]);
         }
 
         mTexCoords.put(TEX_COORDS);

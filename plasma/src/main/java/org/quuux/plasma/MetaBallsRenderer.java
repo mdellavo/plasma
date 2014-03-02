@@ -12,8 +12,6 @@ import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import javax.microedition.khronos.opengles.GL11;
-
 
 class MetaBallsRenderer extends EffectRenderer {
 
@@ -25,9 +23,10 @@ class MetaBallsRenderer extends EffectRenderer {
     private static final double VELOCITY = 2.5;
 
     private static final String POSITION_LOCATION = "aPosition";
-    private static final String COLOR_LOCATION = "uColor";
+    private static final String COLOR_LOCATION = "aColor";
     private static final String SIZES_LOCATION = "uSize";
     private static final String MATRIX_LOCATION = "uMatrix";
+    private static final String TEXTURE_LOCATION = "uTexture";
 
     static class MetaBall {
         int age;
@@ -62,6 +61,7 @@ class MetaBallsRenderer extends EffectRenderer {
     private int mColorLocation;
     private int mSizesLocation;
     private int mMatrixLocation;
+    private int mTextureLocation;
 
     public void setFragmentShader(final String shader) {
         Log.d(TAG, "fragment shader = %s", shader);
@@ -78,11 +78,6 @@ class MetaBallsRenderer extends EffectRenderer {
         Log.d(TAG, "renderer: %s", GLHelper.getRenderer());
         Log.d(TAG, "extensions: %s", GLHelper.getExtensions());
 
-        mTexture = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888);
-        renderTexture();
-
-        //mTextureId = loadTexture(mTexture);
-
         mProgramId = GLHelper.linkProgram(
                 GLHelper.compileShader(GL_FRAGMENT_SHADER, mFragmentShader),
                 GLHelper.compileShader(GL_VERTEX_SHADER, mVertexShader)
@@ -92,15 +87,33 @@ class MetaBallsRenderer extends EffectRenderer {
         glUseProgram(mProgramId);
 
         mPositionLocation = glGetAttribLocation(mProgramId, POSITION_LOCATION);
-        mColorLocation = glGetUniformLocation(mProgramId, COLOR_LOCATION);
+        mColorLocation = glGetAttribLocation(mProgramId, COLOR_LOCATION);
+
         mSizesLocation = glGetUniformLocation(mProgramId, SIZES_LOCATION);
         mMatrixLocation = glGetUniformLocation(mProgramId, MATRIX_LOCATION);
+        mTextureLocation = glGetUniformLocation(mProgramId, TEXTURE_LOCATION);
 
         glUniform4f(mColorLocation, 1, 1, 1, 1);
-        glUniform1f(mSizesLocation, 10);
+        glUniform1f(mSizesLocation, SIZE);
 
         glVertexAttribPointer(mPositionLocation, 3, GL_FLOAT, false, 0, mVertices);
         glEnableVertexAttribArray(mPositionLocation);
+
+        glVertexAttribPointer(mColorLocation, 4, GL_FLOAT, false, 0, mColors);
+        glEnableVertexAttribArray(mColorLocation);
+
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+        mTexture = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888);
+        renderTexture();
+
+        mTextureId = GLHelper.loadTexture(mTexture);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mTextureId);
+        glUniform1i(mTextureLocation, 0);
     }
 
     @Override
@@ -110,7 +123,7 @@ class MetaBallsRenderer extends EffectRenderer {
         mWidth = width;
         mHeight = height;
 
-        Matrix.orthoM(mMatrix, 0, -1, 1, 1, -1, 1, -1);
+        Matrix.orthoM(mMatrix, 0, -width/2, width/2, -height/2, height/2, 1, -1);
         glUniformMatrix4fv(mMatrixLocation, 1, false, mMatrix, 0);
 
         for (int i=0; i<NUM_BALLS; i++) {
@@ -133,6 +146,7 @@ class MetaBallsRenderer extends EffectRenderer {
 
         glClearColor(0, 0, 0, .1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         glDrawArrays(GL_POINTS, 0, NUM_BALLS);
     }
 
@@ -148,8 +162,8 @@ class MetaBallsRenderer extends EffectRenderer {
         for(int i=0; i<NUM_BALLS; i++) {
             final MetaBall ball = mBalls.get(i);
 
-            mVertices.put((float) ball.x / (float)SIZE);
-            mVertices.put((float) ball.y / (float)SIZE);
+            mVertices.put((float) ball.x );
+            mVertices.put((float) ball.y );
             mVertices.put(0);
 
             mHsv[0] = ball.age % 360;

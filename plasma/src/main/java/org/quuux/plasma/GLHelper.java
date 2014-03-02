@@ -3,6 +3,7 @@ package org.quuux.plasma;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.opengl.GLU;
 import android.opengl.GLUtils;
 import static android.opengl.GLES20.*;
@@ -134,7 +135,7 @@ class GLHelper
         int[] textures = new int[1];
         glGenTextures(1, textures, 0);
 
-        if (BuildConfig.DEBUG) Log.d(TAG, "Created Texture: " + textures[0]);
+        Log.d(TAG, "Created Texture: %s", textures[0]);
 
         return textures[0];
     }
@@ -145,17 +146,12 @@ class GLHelper
         glBindTexture(GL_TEXTURE_2D, texture);
 
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                GL_NICEST);
+                GL_LINEAR_MIPMAP_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                GL_NICEST);
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                GL_REPEAT);
+                GL_LINEAR);
 
         GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
-
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         return texture;
     }
