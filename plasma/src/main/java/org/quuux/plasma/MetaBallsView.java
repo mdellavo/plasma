@@ -17,10 +17,7 @@ public class MetaBallsView extends GLEffectView {
 
     @Override
     public EffectRenderer getRenderer() {
-        final MetaBallsRenderer renderer = new MetaBallsRenderer();
-        renderer.setVertextShader(Utils.loadTextFromAssets(getContext(), "shaders/vertex.glsl"));
-        renderer.setFragmentShader(Utils.loadTextFromAssets(getContext(), "shaders/fragment.glsl"));
-        return renderer;
+        return MetaBallsRenderer.getInstance(getContext());
     }
 
 

@@ -1,5 +1,6 @@
 package org.quuux.plasma;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.opengl.Matrix;
@@ -198,7 +199,7 @@ class MetaBallsRenderer extends EffectRenderer {
 
         Log.d(TAG, "rendering texture");
 
-        mTexture.eraseColor(Color.BLACK);
+        mTexture.eraseColor(Color.TRANSPARENT);
 
         final int r = 255;
         final int g = 255;
@@ -239,6 +240,13 @@ class MetaBallsRenderer extends EffectRenderer {
 
             ball.age++;
         }
+    }
+
+    public static MetaBallsRenderer getInstance(final Context context) {
+        final MetaBallsRenderer renderer = new MetaBallsRenderer();
+        renderer.setVertextShader(Utils.loadTextFromAssets(context, "shaders/metaballs.vertex.glsl"));
+        renderer.setFragmentShader(Utils.loadTextFromAssets(context, "shaders/metaballs.fragment.glsl"));
+        return renderer;
     }
 
 }
