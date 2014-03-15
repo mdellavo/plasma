@@ -16,10 +16,7 @@ public class SkyBoxView extends GLEffectView {
     // make get renderer async?
     @Override
     public EffectRenderer getRenderer() {
-        return new SkyBoxRenderer(loadBitmap("north"), loadBitmap("west"), loadBitmap("south"), loadBitmap("east"), loadBitmap("top"));
+        return SkyBoxRenderer.getInstance(getContext());
     }
 
-    private Bitmap loadBitmap(final String face) {
-        return Utils.loadBitmapFromAssets(getContext(), String.format("textures/skybox/%s.jpg", face));
-    }
 }

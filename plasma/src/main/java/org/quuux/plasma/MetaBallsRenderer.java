@@ -14,7 +14,7 @@ import java.util.List;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-class MetaBallsRenderer extends EffectRenderer {
+class MetaBallsRenderer extends ShaderEffectRenderer {
 
     private static final String TAG = Log.buildTag(MetaBallsRenderer.class);
 
@@ -55,8 +55,6 @@ class MetaBallsRenderer extends EffectRenderer {
     private float[] mHsv = new float[3];
     private float[] mMatrix = new float[16];
 
-    private String mFragmentShader;
-    private String mVertexShader;
     private int mProgramId;
     private int mPositionLocation;
     private int mColorLocation;
@@ -64,27 +62,10 @@ class MetaBallsRenderer extends EffectRenderer {
     private int mMatrixLocation;
     private int mTextureLocation;
 
-    public void setFragmentShader(final String shader) {
-        Log.d(TAG, "fragment shader = %s", shader);
-        mFragmentShader = shader;
-    }
-
-    public void setVertextShader(final String shader) {
-        Log.d(TAG, "vertex shader = %s", shader);
-        mVertexShader = shader;
-    }
 
     @Override
     public void onSurfaceCreated(final GL10 unused, final EGLConfig config) {
-        Log.d(TAG, "renderer: %s", GLHelper.getRenderer());
-        Log.d(TAG, "extensions: %s", GLHelper.getExtensions());
-
-        mProgramId = GLHelper.linkProgram(
-                GLHelper.compileShader(GL_FRAGMENT_SHADER, mFragmentShader),
-                GLHelper.compileShader(GL_VERTEX_SHADER, mVertexShader)
-        );
-        GLHelper.validateProgram(mProgramId);
-
+        mProgramId = assembleProgram();
         glUseProgram(mProgramId);
 
         mPositionLocation = glGetAttribLocation(mProgramId, POSITION_LOCATION);
@@ -233,7 +214,7 @@ class MetaBallsRenderer extends EffectRenderer {
             else if (ball.x > mWidth/2)
                 ball.dx = -Math.abs(ball.dx);
 
-            if (ball.y < -mWidth/2)
+            if (ball.y < -mHeight/2)
                 ball.dy = Math.abs(ball.dy);
             else if (ball.y > mHeight/2)
                 ball.dy = -Math.abs(ball.dy);

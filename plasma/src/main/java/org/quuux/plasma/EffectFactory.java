@@ -21,18 +21,18 @@ public class EffectFactory {
     // rain
 
     public static List<Class<? extends View>> EFFECTS =  Arrays.<Class<? extends View>>asList(
-            MetaBallsView.class,
-            HeightMapView.class,
             SkyBoxView.class,
+            MetaBallsView.class,
+            //HeightMapView.class,
             FireView.class,
             PlasmaView.class,
             StarFieldView.class
     );
 
     public static List<Class<? extends WallpaperService>> WALLPAPERS = Arrays.asList(
-            MetaBallsWallpaper.class,
-            HeightMapWallpaper.class,
             SkyBoxWallpaper.class,
+            MetaBallsWallpaper.class,
+            //HeightMapWallpaper.class,
             FireWallpaper.class,
             PlasmaWallpaper.class,
             StarFieldWallpaper.class
