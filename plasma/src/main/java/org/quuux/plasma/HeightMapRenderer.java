@@ -1,5 +1,6 @@
 package org.quuux.plasma;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLU;
 
@@ -62,5 +63,9 @@ public class HeightMapRenderer extends EffectRenderer {
 
             }
         }
+    }
+
+    public static HeightMapRenderer getInstance(final Context context) {
+        return new HeightMapRenderer(Utils.loadBitmapFromAssets(context, "textures/heightmap.png"));
     }
 }

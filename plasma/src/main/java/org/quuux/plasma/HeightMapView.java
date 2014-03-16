@@ -10,6 +10,6 @@ public class HeightMapView extends GLEffectView {
 
     @Override
     public EffectRenderer getRenderer() {
-        return new HeightMapRenderer(Utils.loadBitmapFromAssets(getContext(), "textures/heightmap.png"));
+        return HeightMapRenderer.getInstance(getContext());
     }
 }

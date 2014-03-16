@@ -1,20 +1,12 @@
 package org.quuux.plasma;
 
 import android.graphics.Bitmap;
+import android.view.View;
 
-import net.rbgrn.android.glwallpaperservice.GLWallpaperService;
 
-
-public class SkyBoxWallpaper extends GLWallpaperService {
+public class SkyBoxWallpaper extends GLEffectWallpaper {
     @Override
-    public Engine onCreateEngine() {
-        return new SkyBoxEngine();
+    EffectRenderer getRenderer() {
+        return SkyBoxRenderer.getInstance(this);
     }
-
-    class SkyBoxEngine extends GLEngine {
-        SkyBoxEngine() {
-            setRenderer(SkyBoxRenderer.getInstance(getApplicationContext()));
-        }
-    }
-
 }

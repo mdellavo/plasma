@@ -91,6 +91,9 @@ public class SkyBoxRenderer extends ShaderEffectRenderer {
     private final FloatBuffer mTexCoords = GLHelper.floatBuffer(TEX_COORDS.length);
     private final FloatBuffer mVerts = GLHelper.floatBuffer(VERTS.length);
 
+    private int mVertextBuffer;
+    private int[] mIndexBuffers = new int[FACES.length];
+
     private int mProgramId;
     private int mPositionLocation;
     private int mTextureLocation;
@@ -108,6 +111,7 @@ public class SkyBoxRenderer extends ShaderEffectRenderer {
     @Override
     public void onSurfaceCreated(final GL10 gl, final EGLConfig config) {
 
+
         Matrix.setIdentityM(mProjectionMatrix, 0);
         Matrix.setIdentityM(mViewMatrix, 0);
 
@@ -121,13 +125,15 @@ public class SkyBoxRenderer extends ShaderEffectRenderer {
         mPositionLocation = glGetAttribLocation(mProgramId, POSITION_LOCATION);
         mTextureCoordLocation = glGetAttribLocation(mProgramId, TEXTURE_COORD_LOCATION);
 
-        glEnable(GL_DEPTH_TEST);
-
-        glClearDepthf(1.0f);
-        glDepthFunc(GL_LEQUAL);
+//        glEnable(GL_DEPTH_TEST);
+//
+//        glClearDepthf(1.0f);
+//        glDepthFunc(GL_LEQUAL);
 
         mVerts.put(VERTS);
         mVerts.position(0);
+
+        //mVertextBuffer = GLHelper.loadArrayBufferObject(mVerts);
 
         glVertexAttribPointer(mPositionLocation, 3, GL_FLOAT, false, 0, mVerts);
         glEnableVertexAttribArray(mPositionLocation);
@@ -142,10 +148,13 @@ public class SkyBoxRenderer extends ShaderEffectRenderer {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
         for (int i=0; i<FACES.length; i++) {
             mFaces[i] = GLHelper.shortBuffer(FACES[i].length);
             mFaces[i].put(FACES[i]);
             mFaces[i].position(0);
+
+            //mIndexBuffers[i] = GLHelper.loadElementArrayBufferObject(mFaces[i]);
 
             mTextures[i] = GLHelper.loadTexture(mBitmaps[i]);
         }
@@ -185,7 +194,9 @@ public class SkyBoxRenderer extends ShaderEffectRenderer {
 
         glUniformMatrix4fv(mMatrixLocation, 1, false, mTmpMatrix, 0);
 
+        //glBindBuffer(GL_ARRAY_BUFFER, mVertextBuffer);
         for (int i=0; i<FACES.length; i++) {
+            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffers[i]);
             glBindTexture(GL_TEXTURE_2D, mTextures[i]);
             glDrawElements(GL_TRIANGLE_FAN, FACES[i].length, GL_UNSIGNED_SHORT, mFaces[i]);
         }

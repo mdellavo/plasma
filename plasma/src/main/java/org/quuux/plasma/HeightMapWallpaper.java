@@ -1,16 +1,11 @@
 package org.quuux.plasma;
 
-import net.rbgrn.android.glwallpaperservice.GLWallpaperService;
+import android.view.View;
 
-public class HeightMapWallpaper extends GLWallpaperService {
+public class HeightMapWallpaper extends GLEffectWallpaper {
+
     @Override
-    public Engine onCreateEngine() {
-        return new HeightMapEngine();
-    }
-
-    private class HeightMapEngine extends GLEngine {
-        HeightMapEngine() {
-            setRenderer(new HeightMapRenderer(null));
-        }
+    EffectRenderer getRenderer() {
+        return HeightMapRenderer.getInstance(this);
     }
 }

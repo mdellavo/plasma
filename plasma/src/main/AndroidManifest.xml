@@ -63,9 +63,6 @@
             </meta-data>
         </service>
 
-
-
-
         <service
             android:name=".MetaBallsWallpaper"
             android:enabled="true"
@@ -82,6 +79,22 @@
             </meta-data>
         </service>
 
+
+        <service
+            android:name=".SkyBoxWallpaper"
+            android:enabled="true"
+            android:label="@string/skybox_wallpaper_label"
+            android:permission="android.permission.BIND_WALLPAPER" >
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" >
+                </action>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/skybox_wallpaper" >
+            </meta-data>
+        </service>
 
         <activity
             android:name=".PlasmaActivity"

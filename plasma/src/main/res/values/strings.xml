@@ -12,4 +12,6 @@
     <string name="starfield_wallpaper_description">The final frontier</string>
     <string name="metaballs_wallpaper_label">MetaBalls!</string>
     <string name="meatballs_wallpaper_description">so meta</string>
+    <string name="skybox_wallpaper_label">The Sky</string>
+    <string name="skybox_wallpaper_description">A view of the sky!</string>
 </resources>

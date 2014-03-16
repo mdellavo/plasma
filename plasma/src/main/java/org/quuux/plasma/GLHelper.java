@@ -220,15 +220,28 @@ class GLHelper
     private static int createBufferObject() {
         int[] rv = new int[1];
         glGenBuffers(1, rv, 0);
+
+        if (rv[0] <= 0) {
+            checkGlError("glGenBuffers");
+        }
+
         return rv[0];
     }
     
-    public static int loadBufferObject(FloatBuffer data) {
+    public static int loadArrayBufferObject(final FloatBuffer data) {
         int buffer = createBufferObject();
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, data.limit() * 4, data,
-                GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data.limit() * 4, data, GL_STATIC_DRAW);
+
+        return buffer;
+    }
+
+    public static int loadElementArrayBufferObject(final ShortBuffer data) {
+        int buffer = createBufferObject();
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.limit() * 2, data, GL_STATIC_DRAW);
 
         return buffer;
     }

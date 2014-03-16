@@ -35,6 +35,7 @@ abstract class EffectWallpaper extends WallpaperService {
         @Override
         public void onSurfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
             super.onSurfaceChanged(holder, format, width, height);
+
             //mView.onSizeChanged(width, height, 0, 0);
         }
 
